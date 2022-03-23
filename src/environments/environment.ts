@@ -7,7 +7,6 @@ export const environment = {
   BASE_URL: "https://localhost:44346",
   NOTIFICATION_URL : "https://localhost:44346",
 };
-export CHROME_BIN=/usr/bin/chromium-browser
 
 /*
  * For easier debugging in development mode, you can import the following file
