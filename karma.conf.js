@@ -31,17 +31,7 @@ module.exports = function (config) {
         { type: 'html' },
         { type: 'text-summary' }
       ]
-      customLaunchers: {
-      ChromeHeadlessCustom: {
-          base: 'ChromeHeadless',
-          flags: [
-              '--no-sandbox',
-              '--disable-gpu',
-              '--headless',
-              '--remote-debugging-port=9222'
-          ]
-      }
-    },
+      },
     reporters: ['progress', 'kjhtml'],
     port: 9876,
     colors: true,
