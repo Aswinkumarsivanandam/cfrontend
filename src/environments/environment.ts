@@ -4,8 +4,10 @@
 
 export const environment = {
   production: false,
-  BASE_URL: "https://localhost:44346",
-  NOTIFICATION_URL : "https://localhost:44346",
+ BASE_URL: "https://localhost:44347",
+ NOTIFICATION_URL : "https://localhost:44347",
+// BASE_URL: "https://credor-api.azurewebsites.net/",
+//   NOTIFICATION_URL : "https://credor-api.azurewebsites.net/",
 };
 
 /*

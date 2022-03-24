@@ -14,6 +14,9 @@ APIURL = environment.BASE_URL;
   GetAllDocument(UserId : any){
     return this.http.get(this.APIURL + '/Documents/getalldocuments/' + UserId,{responseType : 'json'});
   }
+  GetAllEmail(UserId : any){
+    return this.http.get(this.APIURL + '/Email/getemailbyuserid/' + UserId,{responseType : 'json'});
+  }
   DeleteDocumentById(UserId : any,DocId : any){
     return this.http.delete(this.APIURL + '/Documents/deletedocument/' + UserId + '/' + DocId,{responseType : 'json'});
   }

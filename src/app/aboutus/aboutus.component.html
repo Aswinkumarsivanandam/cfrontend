@@ -1,0 +1,22 @@
+
+  <!-- <ckeditor [editor]="Editor" data="{{EmailContent}}" [(ngModel)]="EmailContent" [disabled]="true">
+  </ckeditor> -->
+  <div [innerHTML]="EmailContent"></div>
+
+<div class="containter-fluid footerbg">
+  <div class="row w-100 p-3">
+
+
+    <div class="col-md-6">
+    <div class="copytxt"><strong>Copyright © Credor</strong> - 2022 All rights reserved</div>
+    </div>
+    <div class="col-md-6 text-right">
+    <div class="privtxt"><a routerLink='/privacy-policy'>Privacy Policy</a> &nbsp; &nbsp; <a routerLink='/terms-and-conditions'>Terms and Conditions</a></div>
+    </div>
+      </div>
+    </div>
+    <div class="loader" *ngIf="Loader">
+      <div class="dot-flashing"></div>
+    </div>
+
+

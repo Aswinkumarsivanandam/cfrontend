@@ -5,23 +5,23 @@
     <div class="col-sm-6">
       <div class="login-container">
         <div class="auth-wrapper w-100">
-          <div class="card">
+          <div class="card" >
             <div class="brand-wrapper">
               <img src="../../assets/images/Credor-logo.png" class="" alt="credor-logo" width="100px">
             </div>
             <h2 class="text-center mt-4 mb-4">Sign Up to View Opportunities</h2>
-            <form [formGroup]="SignUpForm">
+            <form [formGroup]="SignUpForm" id="suf">
               <div class="row">
                 <div class="col pl-0">
                   <div class="field-group">
                     <label for="firstname" class="">First Name</label>
-                    <input type="text" class="input-field" formControlName="Firstname" [disabled]="true">
+                    <input id="signup_suf_firstname" type="text" class="input-field" formControlName="Firstname" [disabled]="true">
                   </div>
                 </div>
                 <div class="col pr-0">
                   <div class="field-group">
                     <label for="lastname" class="">Last Name</label>
-                    <input type="text" class="input-field" formControlName="Lastname" [disabled]="true">
+                    <input id="signup_suf_lastname" type="text" class="input-field" formControlName="Lastname" [disabled]="true">
                   </div>
                 </div>
               </div>
@@ -30,7 +30,7 @@
                 <div class="col pl-0 pr-0">
                   <div class="field-group">
                     <label for="email" class="">Email</label>
-                    <input type="email" class="input-field" formControlName="Email" [disabled]="true"`>
+                    <input id="signup_suf_email" type="email" class="input-field" formControlName="Email" [disabled]="true"`>
                   </div>
                 </div>
               </div>
@@ -42,7 +42,7 @@
                     <label for="password" class="">Create Password</label>
                     <div class="field-group">
                       <div class="input-field-group">
-                        <input type="password" formControlName="CreatePassword" class="input-field"
+                        <input id="signup_suf_createpassword" type="password" formControlName="CreatePassword" class="input-field"
                           (keydown.space)="$event.preventDefault();" (blur)="onPassword($event)">
                       </div>
                     </div>
@@ -69,7 +69,7 @@
                 <div class="col pr-0 pt-2">
                   <label for="confirmpassword" class="">Confirm Password</label>
                   <div class="input-field-group">
-                    <input type="password" formControlName="ConfirmPassword" (keydown.space)="$event.preventDefault();"
+                    <input id="signup_suf_confirmpassword" type="password" formControlName="ConfirmPassword" (keydown.space)="$event.preventDefault();"
                       (blur)="onConfirmPassword($event)" class="input-field">
                   </div>
                   <div class="validation-msg">
@@ -79,9 +79,9 @@
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center">
-                <button type="submit" class="button button-secondary">Register</button>
+                <button id="signup_suf_register" type="submit" class="button button-secondary">Register</button>
                 <div class="text-center mt-4">Already have an account?
-                  <a href="javascript:void(0);" (click)="Login()">Login here</a>
+                  <a id="signup_suf_loginhere" href="javascript:void(0);" (click)="Login()">Login here</a>
                 </div>
               </div>
             </form>
@@ -92,6 +92,6 @@
     </div>
   </div>
   <div class="loader" *ngIf="Loader">
-    <div class="dot-flashing"></div>
+    <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
   </div>
 </div>

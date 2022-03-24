@@ -1,0 +1,134 @@
+<div class="">
+    <div class="">
+        <div class="row mt-3">
+            <div class="col">
+                <label for="date" class="">Date<span class="validation-msg">*</span></label>
+                <input type="date" class="input-field" id="portfolio_addupdateshow_date" [(ngModel)]="UpdateDate" (change)="UpdateDatechange()">
+                <div *ngIf="UpdateDateError" class="validation-msg">
+                  <span>Please select date</span>
+                </div>
+              </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+              <label for="subject" class="">Subject<span class="validation-msg">*</span></label>
+              <input id="portfolio_addupdateshow_subject" type="text" class="input-field" placeholder="Enter Subject here" [(ngModel)]="UpdateSubject" (change)="UpdateSubjectchange()">
+              <div *ngIf="UpdateSubjectError" class="validation-msg">
+                <span>Please enter subject</span>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col">
+              <label for="fromname" class="">From Name<span class="validation-msg">*</span></label>
+              <input id="portfolio_addupdateshow_fromname" type="text" class="input-field" placeholder="Enter name here" [(ngModel)]="UpdateFromName" (change)="UpdateFromNamechange()">
+              <div *ngIf="UpdateFromNameError" class="validation-msg">
+                <span>Please enter from name</span>
+              </div>
+            </div>
+            <div class="col">
+              <label for="type" class="">From Email</label>
+              <select class="input-field" id="portfolio_addupdateshow_fromemail" name="type" [(ngModel)]="UpdateFromEmail"
+                (change)="onchangeFromEmail($event)">
+                <option *ngFor="let item of EmailList" [value]="item.id" [selected]="item.id == UpdateFromEmail">
+                  {{ item.emailId }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="row  mt-3 ">
+            <div class="col">
+              <label for="subject" class="">Reply-To<span class="validation-msg">*</span></label>
+              <input id="portfolio_addupdateshow_replyto" type="text" class="input-field" placeholder="Enter ReplyTo here" [(ngModel)]="UpdateReplyTo" (change)="UpdateReplyTochange()">
+              <div *ngIf="UpdateReplyToError" class="validation-msg">
+                <span>Reply-to is required</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3">
+            <div class="summery-texts">
+                <!-- <ckeditor id="portfolio_addupdateshow_updatevalue" [editor]="Editor" data="{{UpdateValue}}" (ready)="onReady($event)"
+                [(ngModel)]="UpdateValue" ></ckeditor> -->
+                <angular-editor [(ngModel)]="htmlContent"  [config]="config"></angular-editor>
+            </div>
+          </div>
+          <!-- <div class="html">
+            {{ htmlContent }}
+          </div> -->
+          <div class="row mt-3 pl-3 pr-3">
+        <div>    <label class="checkcontainer mr-5">
+              <div>Email investors this update</div>
+              <input id="portfolio_addupdateshow_bycheckemail"  [(ngModel)]="byCheckEmail" value="byCheckEmail" type="checkbox" data-toggle="toggle" >
+              <span class="checkmark checkright"></span>
+            </label></div> <br>
+    
+           <div> <label class="checkcontainer mr-5">
+              <div>Include account statement</div>
+              <input id="portfolio_addupdateshow_bycheckaccount"  [(ngModel)]="byCheckAccount" value="byCheckAccount" type="checkbox" data-toggle="toggle">
+    
+              <span class="checkmark checkright"></span>
+            </label></div> <br>
+            <label class="checkcontainer">
+              <div>Send copy to me</div>
+              <input id="portfolio_addupdateshow_bycheckcopy" [(ngModel)]="byCheckCopy" type="checkbox" data-toggle="toggle" >
+    
+              <span class="checkmark checkright"></span>
+            </label>
+          </div>
+          <div class="text-wrapper dragfiles ml-3 mr-3">
+            <div class="centered">
+              <input id="portfolio_addupdateshow_fileselect" type="file" class="sr-only" name="file" id="file" multiple (change)="onFilesSelect($event)">
+              <label for="file">Click to select files</label>
+            </div>
+          </div>
+          <!-- <table class="table mb-3 Viewtable" *ngIf="files?.length > 0">
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Document Type</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of files; let i=index">
+                <td>
+                  {{item.name}}
+                </td>
+                <td>
+                  {{item.documentType}}
+                </td>
+                <td class="text-right">
+                  <span id="portfolio_addupdateshow_removedoc_{{item.id}}" class="action-icon" (click)="removeDocument(item, i)">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                    </svg>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table> -->
+          <br>
+          <div class="row col-md-12 py-3" *ngIf="files?.length > 0">
+            <div class="col-md-12" *ngFor="let item of files; let i=index">
+                <div class="row">
+                    <img src="../../assets/images/icons/pdf.png" alt="" width="48" height="48" *ngIf="item.type == 'application/pdf' || item.type == 'pdf'">
+                    <img src="../../assets/images/icons/jpg.png" alt="" width="48" height="48" *ngIf="item.type == 'image/jpeg'">
+                    <img src="../../assets/images/icons/png.png" alt="" width="48" height="48" *ngIf="item.type == 'image/png'">
+                    <img src="../../assets/images/icons/word.png" alt="" width="48" height="48"
+                      *ngIf="item.type == 'word'  || item.type == 'docx'">
+                    <img src="../../assets/images/icons/xls.png" alt="" width="48" height="48" *ngIf="item.type == 'xlxx' || item.type == 'application/vnd.ms-excel' || item.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
+                    <img src="../../assets/images/icons/ppt.png" alt="" width="48" height="48" *ngIf="item.type == 'pptx'">
+                    <div class="preview-file-name">{{item.name}}</div>
+                    <div>
+                        <img src="../../assets/images/icons/clear.png" alt="" width="48" height="48" (click)="removeDocument(item, i)">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+          <button id="portfolio_addupdateshow_save" class="button-outline mr-3" (click)="SaveUpdates(2)"> Save</button>
+          <button *ngIf="UpdateStatus != 2" id="portfolio_addupdateshow_save" class="button-outline mr-3" (click)="SaveUpdates(1)"> Save as Draft</button>
+        </div>
+        </div>

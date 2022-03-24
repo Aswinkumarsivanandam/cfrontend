@@ -1,0 +1,284 @@
+<!---------------------------Email Template Table List------------------------->
+<div class="divradius">
+    <table #tableInput class="documents-table bordertable">
+        <thead>
+            <tr>
+                <th scope="col">Document Name</th>
+                <th scope="col">Profile Types</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Date</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let item of esignDocumentList">
+                <td>{{item.documentName}}</td>
+                <td>{{item.profileList}}</td>
+                <td>{{item.status == 1 ? 'Draft' : 'Completed'}}</td>
+                <td>{{item.createdOn | date: 'MMM dd, yyy'}}</td>
+                <td>
+                    <button data-toggle="modal" data-target="#editProfileShow" (click)="editProfile(item)">Edit
+                        Profile</button>
+                    <button>Edit Template</button>
+                    <span class="action-icon" (click)="onDownloadFile(item)">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path d="M13 5v6h1.17L12 13.17 9.83 11H11V5h2m2-2H9v6H5l7 7 7-7h-4V3zm4 15H5v2h14v-2z" />
+                        </svg>
+                    </span>
+                    <span id="viewdetails_viewfile" class="action-icon" (click)="viewDocument(item)" data-toggle="modal"
+                        data-target="#DocumentViewShow">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+                        </svg>
+                    </span>
+                    <span class="action-icon" (click)="deleteTemplateConformation(item)" data-toggle="modal"
+                        data-target="#delTemplateConformationShow">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                            fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                        </svg>
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- <pagination-controls *ngIf="esignDocumentList.length > 0" (pageChange)="pageChanged($event)">
+    </pagination-controls> -->
+</div>
+<div *ngIf="esignDocumentList.length == 0">
+    No esign Document.
+</div>
+
+<div style="margin-left: 77%;">
+    <button (click)="openEsignTutorial()">Esign Tutorial</button>
+    <button class="button button-primary-o" data-toggle="modal" data-target="#uploadEsignDocumentShow"
+        (click)="uploadDocument()">Upload</button>
+</div>
+
+<!----------------------------Upload Esign Document PopUp------------------------->
+
+<div class="modal modal_outer right_modal fade" id="uploadEsignDocumentShow" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel2" *ngIf="uploadEsignDocumentShow">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header">
+                <h2>Create esign Template</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    (click)="CloseuploadEsignDocumentShow()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body get_quote_view_modal_body">
+                <div class="modal-content pt-0">
+                    <button class="button button-primary-o" (click)="uploader.click()">Upload</button>
+                    <input hidden type="file" #uploader (change)="onFilesSelect($event)" />
+                </div>
+                <br>
+                <div class="row" *ngIf="files?.length > 0">
+                    <div class="col-md-12" *ngFor="let item of files; let i=index">
+                        <div class="col">
+                            <div class="col-md-6">
+                                <div> {{item.name}}</div>
+                            </div>
+                            <div class="col">
+                                <label for="type" class="">Select Profiles</label>
+                                <ng-multiselect-dropdown [placeholder]="'Select profile'" [settings]="dropdownSettings"
+                                    [data]="ProfileList" [(ngModel)]="ProfileId" (onSelect)="onItemSelect($event)"
+                                    (onDeSelect)="onDeSelect($event)" (onSelectAll)="onSelectAll($event)">
+                                </ng-multiselect-dropdown>
+                            </div>
+                            <div>
+                                <button (click)="RemoveAttachment(item)">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p>
+                        The following option cannot be changed after you click save and upload.To change these setting,
+                        you need to delete the template and create a new one.
+                    </p>
+                    <div class="row">
+                        <label for="type" class="">Sponsor signing order</label>
+                        <select class="input-field" name="type" [(ngModel)]="sponsorId"
+                            (change)="onchangeSponsorList($event)">
+                            <option *ngFor="let item of SponsorList" [value]="item.id"
+                                [selected]="item.id == sponsorId">
+                                {{ item.name }}
+                            </option>
+                        </select>
+                        <div *ngIf="SponsorError" class="validation-msg">
+                            Please select sponsor signing order
+                        </div>
+                    </div>
+                    <div class="row" *ngIf="SponsorSelectedList.length > 0">
+                        <label for="type" class="">Number of investors signing</label>
+                        <select class="input-field" name="type" [(ngModel)]="InvestorSignId"
+                            (change)="onchangeInvestorSignId($event)">
+                            <option *ngFor="let item of InvestorSigningList" [value]="item.id"
+                                [selected]="item.id == InvestorSignId">
+                                {{ item.value }}
+                            </option>
+                        </select>
+                        <div *ngIf="InvestorSigningIdError" class="validation-msg">
+                            Please select Number of investors signing
+                        </div>
+                    </div>
+                    <div class="row" *ngIf="SponsorsigningShow">
+                        <label for="type" class="">Number of sponsors signing</label>
+                        <select class="input-field" name="type" [(ngModel)]="SponsorSignId"
+                            (change)="onchangeSponsorSignId($event)">
+                            <option *ngFor="let item of SponsorSigningList" [value]="item.id"
+                                [selected]="item.id == SponsorSignId">
+                                {{ item.value }}
+                            </option>
+                        </select>
+                        <div *ngIf="SponsorSigningIdError" class="validation-msg">
+                            Please select Number of sponsors signing
+                        </div>
+                    </div>
+                    <div class="col" *ngIf="SponsorSignId == 1 || SponsorSignId == 2 || SponsorSignId == 3">
+                        <label for="fromname" class="">Email of sponsor 1</label>
+                        <select class="input-field" name="type" [(ngModel)]="SponsorName1Id"
+                            (change)="onchangeSponsor1($event)">
+                            <option *ngFor="let item of SponsorName1List" [value]="item.id"
+                                [selected]="item.id == SponsorName1Id">
+                                {{ item.emailId }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col" *ngIf="SponsorSignId == 2 || SponsorSignId == 3">
+                        <label for="fromname" class="">Email of sponsor 2</label>
+                        <select class="input-field" name="type" [(ngModel)]="SponsorName2Id"
+                            (change)="onchangeSponsor2($event)">
+                            <option *ngFor="let item of SponsorName2List" [value]="item.id"
+                                [selected]="item.id == SponsorName2Id">
+                                {{ item.emailId }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col" *ngIf="SponsorSignId == 3">
+                        <label for="fromname" class="">Email of sponsor 3</label>
+                        <select class="input-field" name="type" [(ngModel)]="SponsorName3Id"
+                            (change)="onchangeSponsor3($event)">
+                            <option *ngFor="let item of SponsorName3List" [value]="item.id"
+                                [selected]="item.id == SponsorName3Id">
+                                {{ item.emailId }}
+                            </option>
+                        </select>
+                    </div>
+                    <div *ngIf="errorShow">
+                        Some esign document(s) already exists
+                        {{InvestorSignId}} esign document already exists for {{Selectedprofilevalue}} profile types.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="button-outline mr-3" data-dismiss="modal" [disabled]="errorShow"
+                        (click)="saveandUpload()">Save and Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-------------------------------------Edit Profile popup Show----------------------------------------------->
+<div class="modal modal_outer right_modal fade" id="editProfileShow" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel2" *ngIf="editProfileShow">
+    <div class="modal-dialog" role="document" style="width:800px">
+        <div class="modal-content ">
+            <div class="modal-header">
+                <h2>Update esign Template</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    (click)="editProfileShow = false">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body get_quote_view_modal_body">
+                <div class="modal-content pt-0">
+                    <div class="col">
+                        <label for="type" class="">Select Profiles</label>
+                        <ng-multiselect-dropdown [placeholder]="'Select profile'" [settings]="dropdownSettings"
+                            [data]="ProfileList1" [(ngModel)]="ProfileId" (onSelect)="onItemSelect($event)"
+                            (onDeSelect)="onDeSelect($event)" (onSelectAll)="onSelectAll($event)">
+                        </ng-multiselect-dropdown>
+                    </div>
+                    <div class="col">
+                        <label>Sponsor Count</label>
+                        <br>
+                        {{editProfileSponsorCount}}
+                    </div>
+                    <div class="col">
+                        <label>Sponsor Signing Order</label>
+                        <br>
+                        {{editProfileSponsorSigningOrder}}
+                    </div>
+                    <div class="col">
+                        <label>Investor Count</label>
+                        <br>
+                        {{editProfileSponsorInvestorCount}}
+                    </div>
+                    <div class="col">
+                        <label>Sponsor 1</label>
+                        <br>
+                        {{editProfileSponsor1}}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button-outline mr-3" data-dismiss="modal" (click)="UpdateTemplate()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-----------------------------esign document view---------------------->
+<div class="modal modal_outer right_modal fade" id="DocumentViewShow" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel2" *ngIf="DocumentViewShow">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header">
+                <h3>View Document</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body get_quote_view_modal_body">
+                <div class=" pt-0">
+                    <ngx-doc-viewer url="{{documentView}}" viewer="google" style="width:100%;height:93vh;">
+                    </ngx-doc-viewer>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-----------------------------------Delete Template Conformation PopUp ------------------------->
+<div class="modal modal_outer right_modal fade" id="delTemplateConformationShow" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel2" *ngIf="delTemplateConformationShow">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content ">
+            <div class="modal-header">
+                <h2>Delete Template</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    (click)="delTemplateConformationShow = false">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body get_quote_view_modal_body">
+                <div class="modal-content pt-0">
+                    Are you sure you want to permanently delete this template?
+                </div>
+                <div class="modal-footer">
+                    <button id="portfolio_distributionhisdelshow_yes" class="button-outline mr-3" data-dismiss="modal"
+                        (click)="deleteTemplate()">Yes</button>
+                    <button id="portfolio_distributionhisdelshow_no" type="button" class="button" data-dismiss="modal">
+                        <span>No</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

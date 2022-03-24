@@ -30,7 +30,7 @@ export class InvestorProfileService {
     return this.http.put(this.APIURL + '/Profile/updateuserprofile',data,{responseType : 'json'})
   }
   DeleteProfile(UserId : any,UserProfileId : any){
-    return this.http.put(this.APIURL + '/Profile/deleteuserprofile/' + UserId + '/' + UserProfileId,{responseType : 'json'})
+    return this.http.delete(this.APIURL + '/Profile/deleteuserprofile/' + UserId + '/' + UserProfileId,{responseType : 'json'})
   }
   GetBankDetails(userid : any){
     return this.http.get(this.APIURL + '/BankAccount/getallbankaccounts/' + userid,{responseType : 'json'})
@@ -42,7 +42,7 @@ export class InvestorProfileService {
     return this.http.put(this.APIURL + '/BankAccount/updatebankaccount',data,{responseType : 'json'})
   }
   DeleteBank(UserId : any,BankProfileId : any){
-    return this.http.put(this.APIURL + '/BankAccount/deletebankaccount/' + UserId + '/' + BankProfileId,{responseType : 'json'})
+    return this.http.delete(this.APIURL + '/BankAccount/deletebankaccount/' + UserId + '/' + BankProfileId,{responseType : 'json'})
   }
   GetUserById(UserId : any){
     return this.http.get(this.APIURL + '/Authentication/getuserbyid/' + UserId,{responseType : 'json'})

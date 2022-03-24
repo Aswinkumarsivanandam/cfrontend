@@ -9,9 +9,16 @@ import { environment } from 'src/environments/environment';
 export class UpdatesService {
   APIURL = environment.BASE_URL;
 
-  constructor(private http : HttpClient,private router : Router) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
-  GetUpdates(UserId : any){
-    return this.http.get(this.APIURL + '/Updates/getallportfolioupdates/'+ UserId,{responseType : 'json'});
+  GetUpdates(UserId: any) {
+    return this.http.get(this.APIURL + '/Updates/getallportfolioupdates/' + UserId, { responseType: 'json' });
+  }
+  GetUpdateContent(Id: any) {
+    return this.http.get(this.APIURL + "/Updates/getportfolioupdate/" + Id, { responseType: 'json' });
+  }
+
+  GetUpdateDocument(Id: any) {
+    return this.http.get(this.APIURL + "/Updates/getportfolioupdatedocuments/" + Id, { responseType: 'json' });
   }
 }

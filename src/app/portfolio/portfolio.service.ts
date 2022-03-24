@@ -1,7 +1,10 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -33,7 +36,7 @@ export class PortfolioService {
   SavePortfolioReservation(data : any){
     return this.http.post(this.APIURL + '/portfolio/addportfolioreservation', data,{responseType : 'json'});
   }
-  
+
   UpdatePortfolioReservation(data : any){
     return this.http.put(this.APIURL + '/portfolio/updateportfolioreservation', data,{responseType : 'json'});
   }
@@ -62,8 +65,16 @@ export class PortfolioService {
     return this.http.put(this.APIURL + '/portfolio/restoreportfoliooffering' + '/' + AdminId + '/' + Id ,{responseType : 'json'});
   }
 
-  getSubscription(){
-    return this.http.get(this.APIURL + '/Documents/getallsubscriptiondocuments' ,{responseType : 'json'});
+  getSubscription(Id : any){
+    return this.http.get(this.APIURL + '/Documents/getallsubscriptiondocuments' + '/' + Id ,{responseType : 'json'});
+  }
+
+  getAccreditations(Id : any){
+    return this.http.get(this.APIURL + '/Documents/getallaccreditationdocuments' + '/' + Id ,{responseType : 'json'});
+  }
+
+  getUpdates(Id : any){
+    return this.http.get(this.APIURL + '/portfolio/getportfolioupdates' + '/' + Id ,{responseType : 'json'});
   }
 
   UpdateGalleryImage(data : any){
@@ -118,6 +129,10 @@ export class PortfolioService {
     return this.http.get(this.APIURL + '/Investor/getallinvestoraccounts',{responseType : 'json'});
   }
 
+  GetAllInvestorAndLeadAccounts(){
+    return this.http.get(this.APIURL + '/Investor/getallinvestorandleadaccounts',{responseType : 'json'});
+  }
+
   getProfileType(investorid:any){
     return this.http.get(this.APIURL + '/Investor/getalluserprofile' + '/' + investorid,{responseType : 'json'});
   }
@@ -156,11 +171,11 @@ export class PortfolioService {
   getReservationSummary(Id : any){
     return this.http.get(this.APIURL + '/portfolio/getreservationssummary' + '/' + Id ,{responseType : 'json'});
   }
-  
+
   getReservationList(Id : any){
     return this.http.get(this.APIURL + '/portfolio/getreservationslist' + '/' + Id ,{responseType : 'json'});
   }
- 
+
   SaveNewReservation(data : any){
     return this.http.post(this.APIURL + '/portfolio/addreservation', data,{responseType : 'json'});
   }
@@ -172,7 +187,7 @@ export class PortfolioService {
   UpdateNewReservation(data : any){
     return this.http.put(this.APIURL + '/portfolio/updatereservation', data,{responseType : 'json'});
   }
-  
+
   saveNewReservationNotes(data : any){
     return this.http.put(this.APIURL + '/portfolio/addreservationnotes', data,{responseType : 'json'});
   }
@@ -180,15 +195,15 @@ export class PortfolioService {
   getCapTable(Id : any){
     return this.http.get(this.APIURL + '/portfolio/getportfolioofferingcaptable' + '/' + Id ,{responseType : 'json'});
   }
-  
+
   updateOwnership(data : any){
     return this.http.put(this.APIURL + '/portfolio/updatecaptable', data,{responseType : 'json'});
   }
-  
+
   GetDistributionHistory(Id : any){
     return this.http.get(this.APIURL + '/portfolio/getofferingdistributions' + '/' + Id ,{responseType : 'json'});
   }
- 
+
   deleteHistory(Id : any , adminId : any){
     return this.http.delete(this.APIURL + '/portfolio/deleteofferingdistribution' + '/' + Id + '/' + adminId ,{responseType : 'json'});
   }
@@ -196,7 +211,7 @@ export class PortfolioService {
   getViewHistoryList(Id : any){
     return this.http.get(this.APIURL + '/portfolio/getofferingdistributiondetail' + '/' + Id ,{responseType : 'json'});
   }
-  
+
   getHistoryType(){
     return this.http.get(this.APIURL + '/portfolio/getportfoliodistributiontypes' ,{responseType : 'json'});
   }
@@ -208,8 +223,79 @@ export class PortfolioService {
   addDistribution(data : any){
     return this.http.post(this.APIURL + '/portfolio/addofferingdistributions', data,{responseType : 'json'});
   }
-  
+
   getInvestorNames(Id : any){
     return this.http.get(this.APIURL + '/portfolio/GetInvestors' + '/' + Id ,{responseType : 'json'});
+  }
+
+  exportCapTable(Id : any){
+    return this.http.put(this.APIURL + '/portfolio/exportofferingcaptable' + '/' + Id ,{responseType: 'blob'});
+  }
+
+  getOffReservationNotes(Id : any){
+    return this.http.get(this.APIURL + '/Investor/getinvestornotes/' + Id,{responseType : 'json'});
+  }
+
+  DeleteOffReservationNotes(UserId : any,Id : any){
+    return this.http.delete(this.APIURL + '/Investor/deleteinvestornotes/' + UserId + '/' + Id,{responseType : 'json'});
+  }
+
+  AddOffReservationNotes(data : any){
+    return this.http.post(this.APIURL + '/Investor/addinvestornotes',data,{responseType : 'json'});
+  }
+
+  UpdateOffReservationNotes(data : any){
+    return this.http.put(this.APIURL + '/Investor/updateinvestornotes',data,{responseType : 'json'});
+  }
+
+  saveLandingPage(data : any){
+    return this.http.put(this.APIURL + '/portfolio/updateportfolioofferingfields',data,{responseType : 'json'});
+  }
+
+  saveConvertToOffering(ResId : any, UserId : any){
+    return this.http.put(this.APIURL + '/portfolio/converttooffering/' + ResId + '/' + UserId,{responseType : 'json'});
+  }
+
+  deleteSubsandAccreditations(UserId : any,Id : any){
+    return this.http.delete(this.APIURL + '/Documents/deletedocument/' + UserId + '/' + Id,{responseType : 'json'});
+  }
+
+  getfromemail(){
+    return this.http.get(this.APIURL + '/portfolio/getcredorfromemailaddresses' ,{responseType : 'json'});
+  }
+
+  addUpdate(data : any){
+    return this.http.post(this.APIURL + '/portfolio/addportfolioupdates',data,{responseType : 'json'});
+  }
+
+  deleteUpdate(Id : any,UserId : any , adminId: any){
+    return this.http.delete(this.APIURL + '/portfolio/deleteportfolioupdates/' + Id + '/' + UserId + '/' + adminId ,{responseType : 'json'});
+  }
+
+  Updatedetails(data : any){
+    return this.http.put(this.APIURL + '/portfolio/updateportfolioupdates',data,{responseType : 'json'});
+  }
+  UpdateDocumentIsPrivate(data : any){
+    return this.http.put(this.APIURL + '/portfolio/UpdateportfolioofferingDocumentisprivate',data,{responseType : 'json'});
+  }
+
+  GetOfferingVisibilityList(){
+    return this.http.get(this.APIURL + '/portfolio/getofferingvisibilitylist',{responseType : 'json'});
+  }
+
+  GetReservationVisibilityList(){
+    return this.http.get(this.APIURL + '/portfolio/getreservationvisibilitylist',{responseType : 'json'});
+  }
+
+  GetOfferingType(){
+    return this.http.get(this.APIURL + '/portfolio/getofferingtype',{responseType : 'json'});
+  }
+
+  GetOfferingStatus(){
+    return this.http.get(this.APIURL + '/portfolio/getofferingstatus',{responseType : 'json'});
+  }
+
+  importDistribution(data : any){
+    return this.http.put(this.APIURL + '/portfolio/importdistributions', data,{responseType : 'json'});
   }
 }

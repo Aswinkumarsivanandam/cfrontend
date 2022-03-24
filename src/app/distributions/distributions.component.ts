@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { InvestService } from '../invest/invest.service';
 import { InvestorProfileService } from '../investor-profile/investor-profile.service';
 import { DistributionService } from './distribution.service';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-distributions',
@@ -11,6 +12,7 @@ import { DistributionService } from './distribution.service';
 export class DistributionsComponent implements OnInit {
   UserId: any;
   DistributionData: any = [];
+  DistributionFooterData: any = [];
   config: any;
   OfferingId: any = 0;
   DropdownProfile: any = []
@@ -21,12 +23,14 @@ export class DistributionsComponent implements OnInit {
   DropdownOffering: any = [];
   Loader: boolean = false;
   Marketplace: any = [];
+  @ViewChild('tableInput') tableInput!: ElementRef;
+  DownloadDistribution: any;
 
   constructor(private distributionService: DistributionService,
     private investService: InvestService,
     private profileService: InvestorProfileService) {
     this.config = {
-      itemsPerPage: 5,
+      itemsPerPage: 100,
       currentPage: 1,
       totalItems: this.DistributionData.length
     };
@@ -34,28 +38,38 @@ export class DistributionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.Loader = true;
-    this.UserId = localStorage.getItem('UserId');
+    if (window.name === 'Remote') {
+      this.UserId = localStorage.getItem('InvestorId');
+    }
+    else {
+      this.UserId = localStorage.getItem('UserId');
+    }
     this.GetDistribution();
   }
 
   GetDistribution() {
     this.distributionService.GetDistributionByUserId(this.UserId).subscribe(data => {
-      this.DistributionValue = data;
-      this.DistributionData = data;
-      for (let i = 0; i < this.DistributionData.length; i++) {
-        if (this.DistributionData[i].userProfile.name != null) {
-          this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.name
-        }
-        if (this.DistributionData[i].userProfile.firstName != null) {
-          this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.firstName + this.DistributionData[i].userProfile.lastName
-        }
-        if (this.DistributionData[i].userProfile.trustName != null) {
-          this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.trustName
-        }
-        if (this.DistributionData[i].userProfile.retirementPlanName != null) {
-          this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.retirementPlanName
-        }
-      }
+      let a: any = {}
+      a = data;
+      this.DistributionData = a.distributions;
+      this.DistributionValue = a.distributions;
+      this.DistributionFooterData = a.distributionFooter;
+      //  this.DistributionValue = data;
+      // this.DistributionData = data;
+      // for (let i = 0; i < this.DistributionData.length; i++) {
+      //   if (this.DistributionData[i].userProfile.name != null) {
+      //     this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.name
+      //   }
+      //   if (this.DistributionData[i].userProfile.firstName != null) {
+      //     this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.firstName + this.DistributionData[i].userProfile.lastName
+      //   }
+      //   if (this.DistributionData[i].userProfile.trustName != null) {
+      //     this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.trustName
+      //   }
+      //   if (this.DistributionData[i].userProfile.retirementPlanName != null) {
+      //     this.DistributionData[i].ProfileName = this.DistributionData[i].userProfile.retirementPlanName
+      //   }
+      // }
       this.GetMarketplace();
     })
   }
@@ -70,9 +84,9 @@ export class DistributionsComponent implements OnInit {
     }
     else {
       this.Filter = this.DropdownProfile.filter((x: { id: any }) => x.id == this.ProfileId)
-      this.DistributionData = this.DistributionValue.filter((x: { ProfileName: any; }) => x.ProfileName == this.Filter[0].name)
-      if (this.Filter1.length > 0) {
-        this.DistributionData = this.DistributionData.filter((x: { offeringName: any; }) => x.offeringName == this.Filter1[0].name)
+      this.DistributionData = this.DistributionValue.filter((x: { userProfileId: any; }) => x.userProfileId == this.Filter[0].id)
+      if (this.Filter.length > 0) {
+        this.DistributionData = this.DistributionData.filter((x: { userProfileId: any; }) => x.userProfileId == this.Filter[0].id)
       }
     }
   }
@@ -85,8 +99,8 @@ export class DistributionsComponent implements OnInit {
     else {
       this.Filter1 = this.DropdownOffering.filter((x: { id: any }) => x.id == this.OfferingId)
       this.DistributionData = this.DistributionValue.filter((x: { offeringName: any; }) => x.offeringName == this.Filter1[0].name)
-      if (this.Filter.length > 0) {
-        this.DistributionData = this.DistributionData.filter((x: { ProfileName: any; }) => x.ProfileName == this.Filter[0].name)
+      if (this.Filter1.length > 0) {
+        this.DistributionData = this.DistributionData.filter((x: { offeringName: any; }) => x.offeringName == this.Filter1[0].name)
       }
     }
   }
@@ -97,24 +111,27 @@ export class DistributionsComponent implements OnInit {
       this.DropdownProfile = [];
       this.DropdownProfile.push({ id: 0, name: 'All Profiles' })
       for (let i = 0; i < x.length; i++) {
-        if (x[i].name != null) {
-          this.DropdownProfile.push({ id: x[i].id, name: x[i].name })
-        }
-        else if (x[i].firstName != null) {
-          this.DropdownProfile.push({ id: x[i].id, name: x[i].firstName })
-        }
-        else if (x[i].trustName != null) {
-          this.DropdownProfile.push({ id: x[i].id, name: x[i].trustName })
-        }
-        else if (x[i].retirementPlanName != null) {
-          this.DropdownProfile.push({ id: x[i].id, name: x[i].retirementPlanName })
-        }
+        this.DropdownProfile.push({ id: x[i].id, name: x[i].profileName })
       }
+      // for (let i = 0; i < x.length; i++) {
+      //   if (x[i].name != null) {
+      //     this.DropdownProfile.push({ id: x[i].id, name: x[i].name })
+      //   }
+      //   else if (x[i].firstName != null) {
+      //     this.DropdownProfile.push({ id: x[i].id, name: x[i].firstName })
+      //   }
+      //   else if (x[i].trustName != null) {
+      //     this.DropdownProfile.push({ id: x[i].id, name: x[i].trustName })
+      //   }
+      //   else if (x[i].retirementPlanName != null) {
+      //     this.DropdownProfile.push({ id: x[i].id, name: x[i].retirementPlanName })
+      //   }
+      // }
       this.Loader = false;
     })
   }
   GetMarketplace() {
-    this.investService.GetMarketplace().subscribe(data => {
+    this.investService.GetMarketplaceByUserId(this.UserId).subscribe(data => {
       this.Marketplace = data
       this.DropdownOffering.push({ id: 0, name: 'All Offering' })
       let x = this.Marketplace.filter((x: { active: boolean; isReservation: boolean }) => x.active == true && x.isReservation == false);
@@ -123,6 +140,30 @@ export class DistributionsComponent implements OnInit {
       }
       this.GetProfile();
     });
+  }
+
+  ExcelTableExport() {
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.tableInput.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'DistributionReports.xlsx');
+  }
+
+  DownloadasPDF() {
+    this.Loader = true;
+    this.distributionService.DownloadDistribution(this.UserId).subscribe(data => {
+      if (data != null) {
+        this.DownloadDistribution = data;
+        this.Loader = false;
+        var a = document.createElement('a');
+        a.href = this.DownloadDistribution.filePath;
+        a.download = "DistributionStatement.pdf";
+        a.click();
+      }
+      else {
+        this.Loader = false;
+      }
+    })
   }
 
 }

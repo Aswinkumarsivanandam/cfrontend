@@ -15,6 +15,12 @@ export class LeadService {
   CreateLead(data : any){
     return this.http.post(this.APIURL + '/Lead/addleadaccount',data,{responseType : 'json'});
   }
+  BulkLeadSave(files:any){
+    return this.http.post(this.APIURL + '/Lead/bulkleadsaveaccount',files,{responseType : 'json'});
+  }
+  GetUserId(UserId : any){
+    return this.http.get(this.APIURL + '/Lead/getuseraccountdetails/' + UserId,{responseType : 'json'});
+  }
   UpdateLead(data : any){
     return this.http.put(this.APIURL + '/Lead/updateleadaccount/',data,{responseType : 'json'});
   }
@@ -50,6 +56,12 @@ export class LeadService {
   }
   UpdateLeadTag(data : any){
     return this.http.put(this.APIURL + '/Lead/updateleadtags',data,{responseType : 'json'})
+  }
+  UpdateMultiLeadTag(data : any){
+    return this.http.put(this.APIURL + '/Lead/updatemultileadtags',data,{responseType : 'json'})
+  }
+  GetTagLeads(TagId : any){
+    return this.http.get(this.APIURL + '/Lead/gettagleads/'+ TagId,{responseType : 'json'});
   }
   DeleteLeadTag(UserId : any,LeadId : any){
     return this.http.delete(this.APIURL + '/Lead/deleteleadtags/'+ UserId +'/' + LeadId,{responseType : 'json'});

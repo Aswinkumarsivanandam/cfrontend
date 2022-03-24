@@ -1,13 +1,404 @@
-<!-- Header Start -->
-<app-header></app-header>
-<!-- Header End -->
+<main>
+  <div class="">
+
+    <div class="row">
+      <div class="container-fluid mb-4">
+
+        <div class="row" *ngIf="HeaderSummaryData != null">
+
+          <div class="col pl-0">
+
+            <div class="leasereport lead4">
+              <div class="leaseheadtxt">Active Investments</div>
 
 
-<div class="content-wrapper">
-  <!-- Sidebar Start -->
-  <app-side-bar></app-side-bar>
-  <!-- Sidebar End -->
-  <div class="main-container m-4">
 
+
+
+              <img src="../../assets/images/dash1.svg" class="leaseimg" style="width:104px">
+              <div class="leaseptxt">{{HeaderSummaryData?.activeInvestments | currency:'USD' : 'symbol' : '1.0-0'}}
+              </div>
+            </div>
+
+          </div>
+
+
+          <div class="col pl-0">
+            <div class="leasereport lead1">
+              <div class="leaseheadtxt">Total Investments</div>
+
+
+              <img src="../../assets/images/dash2.svg" class="leaseimg" style="width:87px">
+              <div class="leaseptxt">{{HeaderSummaryData?.totalInvestments}}</div>
+            </div>
+
+          </div>
+
+          <div class="col pl-0">
+
+
+            <div class="leasereport lead2">
+              <div class="leaseheadtxt">Average Investment</div>
+
+
+              <img src="../../assets/images/dash3.svg" class="leaseimg" style="width:113px">
+              <div class="leaseptxt">{{HeaderSummaryData?.averageInvestment | currency:'USD' : 'symbol' : '1.0-0'}}
+              </div>
+            </div>
+
+          </div>
+
+          <div class="col  pl-0">
+
+
+            <div class="leasereport invest4">
+              <div class="leaseheadtxt">Invested All-Time</div>
+
+
+              <img src="../../assets/images/dash4.svg" class="leaseimg" style="width:105px">
+              <div class="leaseptxt">{{HeaderSummaryData?.investedAllTime | currency:'USD' : 'symbol' : '1.0-0'}}</div>
+            </div>
+          </div>
+          <div class="col pl-0 pr-0">
+
+            <div class="leasereport lead1 invest5">
+              <div class="leaseheadtxt">Distributions</div>
+
+
+              <img src="../../assets/images/dash5.svg" class="leaseimg" style="width:107px">
+              <div class="leaseptxt">{{HeaderSummaryData?.distributions | currency:'USD' : 'symbol' : '1.0-0'}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3 mb-3 ">
+      <div class="col br-right">
+        <h2>Leads</h2>
+        <div class="table-wrapper mt-4 divradius">
+          <!-- <ngx-datatable style="width: 90%; margin: auto" class="material expandable"
+              [rows]="LeadsData" [columnMode]="'force'" [headerHeight]="50" [footerHeight]="50" [columns]="[{name:'Investor Name'},{name:'Profile Name'},{name:'Profile Type'},{name:'Investments'},{name:'Old Details'},{name:'New Details'},{name:'Updated On'},{name:'Updated By'}]"
+              [rowHeight]="'auto'" [limit]="limit" [count]="count" [offset]="offset" [selected]="selected"
+               [selectAllRowsOnPage]="false" (page)="onPage($event)" [scrollbarH]="true">
+               <ngx-datatable-column name="fullName"></ngx-datatable-column>
+               <ngx-datatable-column name="Action">
+                <ng-template ngx-datatable-cell-template>
+                  <div>
+                    <label class="switch">
+                      <input id="investor_onverifyaccount" type="checkbox" [(ngModel)]="LeadsData[0].verifyAccount"
+                        (click)="onVerifyAccount(LeadsData[0])" data-toggle="modal" data-target="#VerifyAccountPopup">
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Action">
+                <ng-template ngx-datatable-cell-template>
+                  <app-email-details [EmailData]="LeadsData[0].id"></app-email-details>
+                  <app-edit-profile [UserProfileData]="LeadsData[0].id" (messageEvent)="ProfileReturnData()"></app-edit-profile>
+                  <span id="lead_notes_{{LeadsData[0].id}}" class="action-icon" (click)="onLeadNotes(LeadsData[0])" data-toggle="modal"
+                    data-target="#NotePopup"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                      width="24px" fill="#000000">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M8 16h8v2H8zm0-4h8v2H8zm6-10H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                    </svg></span>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable> -->
+          <table class="documents-table bordertable">
+            <thead>
+              <tr>
+                <th scope="col" [appSort]="LeadsData" data-order="desc" data-name="fullName">Name</th>
+                <th scope="col">Verify Lead</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of LeadsData | paginate: config">
+                <td style="cursor: pointer;" (click)="UserNameDetails(item)">{{item.fullName}}</td>
+                <td>
+                  <div>
+                    <label class="switch">
+                      <input id="investor_onverifyaccount" type="checkbox" [(ngModel)]="item.verifyAccount"
+                        (click)="onVerifyAccount(item)" data-toggle="modal" data-target="#VerifyAccountPopup">
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </td>
+                <td>
+                  <app-email-details [EmailData]="item.id"></app-email-details>
+                  <app-edit-profile [UserProfileData]="item.id" (messageEvent)="ProfileReturnData()"></app-edit-profile>
+                  <span id="lead_notes_{{item.id}}" class="action-icon" (click)="onLeadNotes(item)" data-toggle="modal"
+                    data-target="#NotePopup"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                      width="24px" fill="#000000">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M8 16h8v2H8zm0-4h8v2H8zm6-10H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                    </svg></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <pagination-controls *ngIf="LeadsData.length > 0" (pageChange)="pageChanged($event)">
+          </pagination-controls>
+        </div>
+      </div>
+      <div class="col">
+        <h2>Offerings</h2>
+        <!-- <ngx-datatable style="width: 90%; margin: auto" class="material expandable" [rows]="OfferingData"
+          [columnMode]="'force'" [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'" [limit]="limit"
+          [count]="count" [offset]="offset" [selected]="selected" [selectAllRowsOnPage]="false" (page)="onPage($event)"
+          [scrollbarH]="true">
+          <ngx-datatable-column name="name"></ngx-datatable-column>
+          <ngx-datatable-column name="statusName"></ngx-datatable-column>
+          <ngx-datatable-column name="Action">
+            <ng-template ngx-datatable-cell-template>
+              <span data-toggle="modal" data-target="#addUpdateShow" (click)="editUpdate(OfferingData[0])">
+                <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
+                  viewBox="0 0 24 24" width="24px" fill="#000000">
+                  <g>
+                    <rect fill="none" height="24" width="24" />
+                  </g>
+                  <path d="M18,11c0,0.67,0,1.33,0,2c1.2,0,2.76,0,4,0c0-0.67,0-1.33,0-2C20.76,11,19.2,11,18,11z" />
+                  <path
+                    d="M16,17.61c0.96,0.71,2.21,1.65,3.2,2.39c0.4-0.53,0.8-1.07,1.2-1.6c-0.99-0.74-2.24-1.68-3.2-2.4 C16.8,16.54,16.4,17.08,16,17.61z" />
+                  <path
+                    d="M20.4,5.6C20,5.07,19.6,4.53,19.2,4c-0.99,0.74-2.24,1.68-3.2,2.4c0.4,0.53,0.8,1.07,1.2,1.6 C18.16,7.28,19.41,6.35,20.4,5.6z" />
+                  <path
+                    d="M4,9c-1.1,0-2,0.9-2,2v2c0,1.1,0.9,2,2,2h1v4h2v-4h1l5,3V6L8,9H4z M9.03,10.71L11,9.53v4.94l-1.97-1.18L8.55,13H8H4v-2h4 h0.55L9.03,10.71z" />
+                  <path d="M15.5,12c0-1.33-0.58-2.53-1.5-3.35v6.69C14.92,14.53,15.5,13.33,15.5,12z" />
+                </svg>
+              </span>
+              <span id="investor_spdu_docbatch_edit_{{OfferingData[0].id}}" class="action-icon" (click)="onOfferingEdit(OfferingData[0])">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+                  <path d="M0 0h24v24H0V0z" fill="none" />
+                  <path
+                    d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                </svg>
+              </span>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable> -->
+        <div class="table-wrapper mt-4 divradius">
+          <table class="documents-table bordertable ">
+            <thead>
+              <tr>
+                <th scope="col" [appSort]="OfferingData" data-order="desc" data-name="name">Offering Name</th>
+                <th scope="col" [appSort]="OfferingData" data-order="desc" data-name="statusName">Status</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of OfferingData | paginate: config1">
+                <td>{{item.name}}</td>
+                <td>{{item.statusName}}</td>
+                <td>
+                  <span data-toggle="modal" data-target="#addUpdateShow" (click)="editUpdate(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
+                      viewBox="0 0 24 24" width="24px" fill="#000000">
+                      <g>
+                        <rect fill="none" height="24" width="24" />
+                      </g>
+                      <path d="M18,11c0,0.67,0,1.33,0,2c1.2,0,2.76,0,4,0c0-0.67,0-1.33,0-2C20.76,11,19.2,11,18,11z" />
+                      <path
+                        d="M16,17.61c0.96,0.71,2.21,1.65,3.2,2.39c0.4-0.53,0.8-1.07,1.2-1.6c-0.99-0.74-2.24-1.68-3.2-2.4 C16.8,16.54,16.4,17.08,16,17.61z" />
+                      <path
+                        d="M20.4,5.6C20,5.07,19.6,4.53,19.2,4c-0.99,0.74-2.24,1.68-3.2,2.4c0.4,0.53,0.8,1.07,1.2,1.6 C18.16,7.28,19.41,6.35,20.4,5.6z" />
+                      <path
+                        d="M4,9c-1.1,0-2,0.9-2,2v2c0,1.1,0.9,2,2,2h1v4h2v-4h1l5,3V6L8,9H4z M9.03,10.71L11,9.53v4.94l-1.97-1.18L8.55,13H8H4v-2h4 h0.55L9.03,10.71z" />
+                      <path d="M15.5,12c0-1.33-0.58-2.53-1.5-3.35v6.69C14.92,14.53,15.5,13.33,15.5,12z" />
+                    </svg>
+                  </span>
+                  <span id="investor_spdu_docbatch_edit_{{item.id}}" class="action-icon" (click)="onOfferingEdit(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                    </svg>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <pagination-controls *ngIf="OfferingData.length > 0" (pageChange)="pageChanged1($event)">
+          </pagination-controls>
+        </div>
+      </div>
+    </div>
+    <div class="documents-table">
+      <div class="row">
+        <div class="pl-4">
+          <div class="nav-right">
+            <ul class="d-flex pl-0">
+              <h2>Users & Investors</h2>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid mb-4">
+      <div class="row">
+        <div class="col-md-3 pl-0">
+          <div class=" dashhigh">
+            <div class="dashboard">
+              <img src="../../assets/images/users.svg" style="width:80px">
+            </div>
+            <div class="dashboardtxt">
+              <h3>{{UserInvestorData?.allUsers}}</h3>
+              <p>All Users</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 pl-0">
+          <div class=" dashhigh">
+            <div class="dashboard">
+              <img src="../../assets/images/verified.svg" style="width:80px;height:57px">
+            </div>
+            <div class="dashboardtxt">
+              <h3>{{UserInvestorData?.verifiedUsers}}</h3>
+              <p>Verified Users</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 pl-0">
+          <div class=" dashhigh">
+            <div class="dashboard">
+              <img src="../../assets/images/wrong.svg" style="width:80px;height:57px">
+            </div>
+            <div class="dashboardtxt">
+              <h3>{{UserInvestorData?.unVerifiedUsers}}</h3>
+              <p>Unverified Users</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 pl-0">
+          <div class=" dashhigh ">
+            <div class="dashboard">
+              <img src="../../assets/images/investor.svg">
+            </div>
+            <div class="dashboardtxt">
+              <h3>{{UserInvestorData?.investors}}</h3>
+              <p>Investors</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+</main>
+
+<div class="modal modal_outer right_modal fade" data-keyboard="false" data-backdrop="static" id="VerifyAccountPopup"
+  tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="VerifyAccountPopup">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3 *ngIf="VerifyPopupShow">Verify Account</h3>
+        <h3 *ngIf="!VerifyPopupShow">Unverify Account</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="VerifyCancel()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="max-height: 400px;overflow:auto;">
+          <span *ngIf="VerifyPopupShow">Are you sure you want to verify this user?</span>
+          <span *ngIf="!VerifyPopupShow">Are you sure you want to unverify this user?</span>
+        </div>
+        <div class="modal-footer text-center mt-5">
+          <button type="button" class="button mr-3" (click)="VerifyCancel()"
+            data-dismiss="modal"><span>No</span></button>
+          <button class="button-outline" (click)="VerifyUser()" data-dismiss="modal">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal modal_outer right_modal fade" data-keyboard="false" data-backdrop="static" id="NotePopup"
+  tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="NotePopup">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Add Notes</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="NotePopup = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="max-height: 400px;overflow:auto;">
+          <table class="documents-table" *ngIf="TableView">
+            <thead>
+              <tr>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of InvestorData">
+                <td>{{item.notes}}</td>
+                <td>
+                  <span id="investor_notepop_editnote_{{item.id}}" class="action-icon" (click)="EditNote(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                    </svg>
+                  </span>
+                  <span id="investor_notepop_deletenote_{{item.id}}" class="action-icon" (click)="DeleteNote(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                      fill="#000000">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                    </svg>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="WriteNoteBool" class="mt-3 text-center">
+            <textarea [(ngModel)]="InvestorNotes" class="input-field" rows="2"
+              placeholder="Write a note here"></textarea>
+            <button id="investor_notepop_cancel" class="button mr-3" (click)="OnCancel()">Cancel</button>
+            <button id="investor_notepop_notesave" class="button-outline mr-3" *ngIf="!EditBool"
+              (click)="NoteSave()">Save</button>
+            <button id="investor_notepop_noteupdate" class="button-outline" *ngIf="EditBool"
+              (click)="NoteSave()">Update</button>
+          </div>
+          <div class="modal-content pt-3" style="max-height: 400px;overflow:auto;"
+            *ngIf="InvestorData.length == 0 && InvestorEmpty">
+            No Notes Avalible!
+          </div>
+        </div>
+        <div class="modal-footer text-center mt-5">
+          <button id="investor_notepop_writeanote" class="button-outline mr-3" (click)="onWriteANote()">Write a
+            note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!---------------------Dashboard offering Details Edit Updates--------------->
+<div class="modal modal_outer right_modal fade" id="addUpdateShow" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="addUpdateShow">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>{{ModalName}} Update</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="modal-content pt-0 ">
+          <app-add-update (messageEvent)="receiveMessage()" [ChildMessageId]="parentMessage"></app-add-update>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loader" *ngIf="Loader">
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
 </div>

@@ -1,0 +1,195 @@
+<span class="action-icon" data-toggle="modal" data-target="#AddEmailPopup" (click)="onAddEmailPopup()">
+  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
+    <path d="M0 0h24v24H0V0z" fill="none" />
+    <path
+      d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+  </svg>
+</span>
+
+<div class="modal modal_outer right_modal fade" data-keyboard="false" data-backdrop="static" id="AddEmailPopup"
+  tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="AddEmailPopup">
+  <div class="modal-dialog" role="document" style="width: 650px;">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Send Email</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="AddEmailPopup = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="max-height: 400px;">
+          <div *ngIf="UserEmailData.length == 0">No Emails to Show!</div>
+          <div *ngIf="UserEmailData.length > 0">
+            <table class="documents-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Recipient</th>
+                  <th>Send On</th>
+                  <th>Email Type</th>
+                  <th>Preview</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of UserEmailData">
+                  <td>{{item.subject}}</td>
+                  <td>{{item.recipientEmailId}}</td>
+                  <td>{{item.createdOn | date}}</td>
+                  <td>{{item.emailTypeName}}</td>
+                  <td>
+                    <span id="investor_viewdetails_{{item.id}}" class="action-icon" data-toggle="modal" data-target="#EmailPreviewPopup" (click)="onPreviewEmailPopup(item)">
+                      <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path
+                          d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+                      </svg>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer text-center mt-5">
+          <button class="button-outline" (click)="onSetupSMTPIMAP()" data-toggle="modal"
+            data-target="#SMTPIMAPPopup">Setup SMTP/IMAP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal modal_outer right_modal fade" id="SMTPIMAPPopup" tabindex="-1" role="dialog"
+aria-labelledby="myModalLabel2" *ngIf="SMTPIMAPPopup">
+  <div class="modal-dialog" role="document" style="width: 550px;">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Send Email</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="SMTPIMAPPopup = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="max-height: 400px;">
+          <div><a (click)="onClickhere()">Click Here</a> to view common IMAP and SMTP details. If you receive an error
+            then enable less secure apps in your Gmail/Yahoo settings.</div>
+          <div *ngIf="SMTPFormShow">
+            <table class="documents-table">
+              <thead>
+                <tr>
+                  <th>Email Provider</th>
+                  <th>IMAP</th>
+                  <th>SMTP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of EmailProviderData">
+                  <td>{{item.name}}</td>
+                  <td>{{item.imap}}</td>
+                  <td>{{item.smtp}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-body get_quote_view_modal_body">
+            <form [formGroup]="SMTPForm">
+              <div class="row">
+                <div class="col pl-0">
+                  <div class="field-group">
+                    <input type="text" class="input-field" placeholder="Enter IMAP Host" id="register_rf_firstname"
+                      formControlName="IMAP" (keyup)="onIMAP()">
+                    <div *ngIf="IMAPNull || IMAPInvalid" class="validation-msg">
+                      <div *ngIf="IMAPNull">IMAP Host is required</div>
+                      <div *ngIf="IMAPInvalid">IMAP Host is invalid</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col pr-0">
+                  <div class="field-group">
+                    <input type="text" class="input-field" placeholder="Enter SMTP Host" id="register_rf_lastname"
+                      formControlName="SMTP" (keyup)="onSMTP()">
+                    <div *ngIf="SMTPNull || SMTPInvalid" class="validation-msg">
+                      <div *ngIf="SMTPNull">SMTP Host is required</div>
+                      <div *ngIf="SMTPInvalid">SMTP Host is invalid</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col pl-0">
+                  <div class="field-group">
+                    <input type="email" class="input-field" placeholder="Enter the Email" id="register_rf_email"
+                      formControlName="Email" (keyup)="onEmail()">
+                    <div *ngIf="EmptyEmail || validEmail" class="validation-msg">
+                      <div *ngIf="EmptyEmail">Email is required</div>
+                      <div *ngIf="validEmail">Email must be a valid email address</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col pr-0">
+                  <div class="field-group">
+                    <div class="input-field-group">
+                      <input [type]="showPassword ? 'text' : 'password'" class="input-field"
+                        placeholder="Enter Password" id="register_rf_createpassword" formControlName="Password"
+                        (keydown.space)="$event.preventDefault();" (keyup)="onPassword()">
+                      <span class="input-field-btn view-pwd">
+                        <button id="register_rf_showpassword" class="button button-clear icon-only" (click)="Password()"
+                          type="button">
+                          <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24"
+                            width="20">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                              d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+                          </svg>
+                          <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24"
+                            width="20">
+                            <path d="M0 0h24v24H0V0zm0 0h24v24H0V0zm0 0h24v24H0V0zm0 0h24v24H0V0z" fill="none" />
+                            <path
+                              d="M12 6c3.79 0 7.17 2.13 8.82 5.5-.59 1.22-1.42 2.27-2.41 3.12l1.41 1.41c1.39-1.23 2.49-2.77 3.18-4.53C21.27 7.11 17 4 12 4c-1.27 0-2.49.2-3.64.57l1.65 1.65C10.66 6.09 11.32 6 12 6zm-1.07 1.14L13 9.21c.57.25 1.03.71 1.28 1.28l2.07 2.07c.08-.34.14-.7.14-1.07C16.5 9.01 14.48 7 12 7c-.37 0-.72.05-1.07.14zM2.01 3.87l2.68 2.68C3.06 7.83 1.77 9.53 1 11.5 2.73 15.89 7 19 12 19c1.52 0 2.98-.29 4.32-.82l3.42 3.42 1.41-1.41L3.42 2.45 2.01 3.87zm7.5 7.5l2.61 2.61c-.04.01-.08.02-.12.02-1.38 0-2.5-1.12-2.5-2.5 0-.05.01-.08.01-.13zm-3.4-3.4l1.75 1.75c-.23.55-.36 1.15-.36 1.78 0 2.48 2.02 4.5 4.5 4.5.63 0 1.23-.13 1.77-.36l.98.98c-.88.24-1.8.38-2.75.38-3.79 0-7.17-2.13-8.82-5.5.7-1.43 1.72-2.61 2.93-3.53z" />
+                          </svg>
+                        </button>
+                      </span>
+                    </div>
+                    <div class="validation-msg">
+                      <div *ngIf="EmptyPassword">Password is required</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div>
+              <button type="button" class="button mr-3" (click)="ResetSMTPIMAP()"><span>Cancel</span></button>
+              <button class="button-outline" (click)="SaveSMTPIMAP()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal modal_outer right_modal fade" data-keyboard="false" data-backdrop="static" id="EmailPreviewPopup"
+  tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="EmailPreviewPopup">
+  <div class="modal-dialog" role="document" style="width: 550px;">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Preview Email</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="EmailPreviewPopup = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="max-height: 400px;">
+          <label>Subject : </label> {{EmailPreviewData.subject}}
+          <ckeditor id="settings_adminbodycontent" [editor]="Editor" data="{{EmailPreviewData.body}}" [disabled]="true">
+            </ckeditor>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loader" *ngIf="Loader">
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
+</div>

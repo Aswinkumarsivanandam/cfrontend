@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
+import { JoyrideService }from 'ngx-joyride';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 export class AppComponent implements OnInit{
   title = 'Credor';
 
-  constructor(private activatedRoute : ActivatedRoute,){
+  constructor(private activatedRoute : ActivatedRoute,private joyride: JoyrideService){
     this.activatedRoute.url.subscribe(url =>{
       let enURL = window.location.href;
       if(enURL.includes('/login')){

@@ -1,0 +1,502 @@
+<!---------------------------------------Manage Email Tabs--------------------------->
+<div class="documents-table mb-3">
+  <div class="row mx-1">
+    <div class="header-nav tab-menu pl-0 d-flex align-items-center justify-content-between">
+      <div class="nav-right">
+        <ul class="d-flex pl-0 m-0">
+          <li class="nav-link active" [ngClass]="{active: Selected == 'send'}" (click)="selectSendTab(1)">
+            Sent
+          </li>
+          <li class="nav-link active" [ngClass]="{active: Selected == 'draft'}" (click)="selectDraftTab(2)">
+            Drafts
+          </li>
+          <li class="nav-link active" [ngClass]="{active: Selected == 'archive'}" (click)="selectArchiveTab(3)">
+            Archive
+          </li>
+          <li class="nav-link active" [ngClass]="{active: Selected == 'bounceEmails'}" (click)="selectBounceTab(4)">
+            Bounce Emails
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<!-----------------------------------Sent Email Tabs------------------------------>
+<div class="documents-table mb-3" *ngIf="TabId == 1 || TabId == 3">
+  <div class="row mx-1">
+    <div class="header-nav tab-menu pl-0 d-flex align-items-center justify-content-between">
+      <div class="nav-right">
+        <ul class="d-flex pl-0 m-0">
+          <li class="nav-link active" [ngClass]="{active: sendSelected == 'sendEmail'}" (click)="selectSendEmailTab(1)">
+            {{manageEmailList.length}}
+            Sent Emails
+          </li>
+          <li class="nav-link active" [ngClass]="{active: sendSelected == 'sendNotification'}"
+            (click)="selectSendNotificationTab(2)">
+            {{SystemNotificationList.length}}
+            System Notifications
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <button class="button mr-3" (click)="getEmailDetails()">Refresh</button>
+    </div>
+  </div>
+</div>
+
+<button *ngIf="MultideleteId.length > 0 && Selected == 'draft'" class="button-outline" (click)="deleteMultiDraftEmail()">Delete Draft</button>
+<button *ngIf="MultiArchiveId.length > 0 && Selected == 'send'" class="button-outline" (click)="archiveMultiEmail()">Archive Emails</button>
+
+<!---------------------------Send Email Table------------------->
+<div *ngIf="manageEmailList.length > 0 && TabId == 1 && SystemId == 1" class="divradius">
+  <div style="float: right;
+  margin-bottom: 10px;"><button
+      class="button-outline" (click)="SentEmailListExport()">Export as Excel</button>
+    </div>
+  <table #senttableInput class="documents-table bordertable">
+    <thead>
+      <tr>
+        <th>
+          <input type="checkbox">
+        </th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="subject">Subject</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="status">Status</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="createdOn">Created on</th>
+        <!-- <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="sentTo">Sent To</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="delivered">Delivered</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="opened">Opened</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="clicked">Clicked</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="bounced">Bounced</th> -->
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of manageEmailList | paginate: config">
+        <td style="width: 40px;">
+          <input type="checkbox" [checked]="item.selected" (change)="onCheckboxsentmailChange($event, item.id)">
+        </td>
+        <td>{{item.subject}}</td>
+        <td>{{item.status == 2 ? 'Completed' : 'Queued'}}</td>
+        <td>{{item.createdOn | date: 'MMM dd, yyy'}}</td>
+        <!-- <td>{{item.sentTo != null ? item.sentTo : 0}}</td>
+        <td>{{item.delivered != null ? item.delivered : 0}}</td>
+        <td>{{item.opened != null ? item.opened : 0}}</td>
+        <td>{{item.clicked != null ? item.clicked : 0}}</td>
+        <td>{{item.bounced != null ? item.bounced : 0}}</td> -->
+        <td>
+          <span id="viewdetails_viewfile" class="action-icon" (click)="PreviewEmail(item)" data-toggle="modal"
+            data-target="#showPreview">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+            </svg>
+          </span>
+          <button (click)="ViewSendDetails(item)" data-toggle="modal" data-target="#showSendEmailDetails" class="button-outline">View</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls *ngIf="manageEmailList.length > 0" (pageChange)="pageChanged($event)">
+  </pagination-controls>
+</div>
+<div *ngIf="manageEmailList.length == 0 && TabId ==1">
+  No Sent Emails.
+</div>
+
+<!---------------------------Draft Email Table------------------->
+<div *ngIf="manageEmailList.length > 0 && TabId == 2 " class="divradius">
+  <table #tableInput class="documents-table bordertable">
+    <thead>
+      <tr>
+        <th>
+          <input type="checkbox">
+        </th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="subject">Subject</th>
+        <!-- <th scope="col">Recipients</th> -->
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="modifiedOn">Last Modified</th>
+        <!-- <th scope="col">Preview</th> -->
+        <!-- <th scope="col">Edit</th> -->
+        <!-- <th scope="col">Send Now</th> -->
+        <th scope="col">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of manageEmailList | paginate: config">
+        <td style="width: 40px;">
+          <input type="checkbox" [checked]="item.selected" (change)="onCheckboxChange($event, item.id)">
+        </td>
+        <td>{{item.subject}}</td>
+        <!-- <td>{{item.recipients}}</td> -->
+        <td>{{item.modifiedOn ? (item.modifiedOn| date: 'MMM dd, yyy') : (item.createdOn | date: 'MMM dd, yyy')
+          }}</td>
+        <!-- <td>
+          <span id="viewdetails_viewfile" class="action-icon" (click)="PreviewEmail(item)" data-toggle="modal"
+          data-target="#showPreview">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+            </svg>
+          </span>
+        </td>
+        <td>
+          <span id="" class="action-icon" (click)="editEmail(item, 1)" data-toggle="modal"
+          data-target="#showEditEmail">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+            </svg>
+          </span>
+        </td> -->
+        <!-- <td>
+          <button class="button-outline" (click)="sentEmail(item)">sent Now</button>
+        </td> -->
+        <td>
+          <span id="viewdetails_viewfile" class="action-icon" (click)="PreviewEmail(item)" data-toggle="modal"
+          data-target="#showPreview">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+            </svg>
+          </span>
+          <span id="" class="action-icon" (click)="editEmail(item, 1)" data-toggle="modal"
+          data-target="#showEditEmail">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+            </svg>
+          </span>
+          <span class="action-icon" (click)="deleteDraftEmail(item)" data-toggle="modal" data-target="#delDraftConformationShow">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+            </svg>
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls *ngIf="manageEmailList.length > 0" (pageChange)="pageChanged($event)">
+  </pagination-controls>
+</div>
+<div *ngIf="manageEmailList.length == 0 && TabId ==2">
+  No Draft Emails.
+</div>
+<!-- <div *ngIf="showEditEmail">
+<app-send-email></app-send-email>
+</div> -->
+<!---------------------------Archive Email Table------------------->
+<div *ngIf="manageEmailList.length > 0 && TabId == 3 && SystemId == 1" class="divradius">
+  <table #tableInput class="documents-table bordertable">
+    <thead>
+      <tr>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="subject">Subject</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="recipients">Recipients</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="modifiedOn">Last Modified</th>
+        <th scope="col">Send Now</th>
+        <th scope="col">Action</th>
+        <!-- <th scope="col">Edit</th> -->
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of manageEmailList | paginate: config">
+        <td>{{item.subject}}</td>
+        <td>{{item.recipients}}</td>
+        <td>{{item.modifiedOn ? (item.modifiedOn| date: 'MMM dd, yyy') : (item.createdOn | date: 'MMM dd, yyy')
+          }}</td>
+          <td>
+            <button (click)="sentEmail(item)" class="button-outline">sent Now</button>
+          </td>
+          <td>
+            <span id="viewdetails_viewfile" class="action-icon" (click)="PreviewEmail(item)" data-toggle="modal"
+            data-target="#showPreview">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                <path d="M0 0h24v24H0V0z" fill="none" />
+                <path
+                  d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+              </svg>
+            </span>
+            <span id="" class="action-icon" (click)="editEmail(item, 2)" data-toggle="modal"
+            data-target="#showEditEmail">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+                <path d="M0 0h24v24H0V0z" fill="none" />
+                <path
+                  d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+              </svg>
+            </span>
+          </td>
+        <!-- <td>
+          <span id="" class="action-icon" (click)="editEmail(item, 2)" data-toggle="modal"
+          data-target="#showEditEmail">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+            </svg>
+          </span>
+        </td> -->
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls *ngIf="manageEmailList.length > 0" (pageChange)="pageChanged($event)">
+  </pagination-controls>
+</div>
+<div *ngIf="manageEmailList.length == 0 && TabId ==3 && SystemId == 1">
+  No Archive Emails.
+</div>
+
+
+<!---------------------------Send System Notification Table------------------->
+<div *ngIf="SystemNotificationList.length > 0 && (TabId == 1 ||  TabId == 3)&& SystemId == 2 " class="divradius">
+  <table #tableInput class="documents-table bordertable">
+    <thead>
+      <tr>
+        <th scope="col" [appSort]="SystemNotificationList" data-order="desc" data-name="subject">Subject</th>
+        <th scope="col" [appSort]="SystemNotificationList" data-order="desc" data-name="recipientEmailId">Recipients</th>
+        <th scope="col" [appSort]="SystemNotificationList" data-order="desc" data-name="createdOn">Sent On</th>
+        <th scope="col" [appSort]="SystemNotificationList" data-order="desc" data-name="emailTypeId">Email Type</th>
+        <th scope="col">Preview</th>
+        <!-- <th scope="col">Resend</th> -->
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of SystemNotificationList | paginate: config">
+        <td>{{item.subject}}</td>
+        <td>{{item.recipientEmailId}}</td>
+        <td>{{item.createdOn ? (item.createdOn| date: 'MMM dd, yyy') : ('-')}}</td>
+        <td>{{item.emailTypeId == 3 ? ('Admin Notifications') : ('User Notifications')}}</td>
+        <td>
+          <span id="viewdetails_viewfile" class="action-icon" (click)="PreviewEmail(item)" data-toggle="modal"
+          data-target="#showPreview">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+            </svg>
+          </span>
+        </td>
+        <!-- <td>
+          <span id="" class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="#03260A">
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+            </svg>
+          </span>
+        </td> -->
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls *ngIf="SystemNotificationList.length > 0" (pageChange)="pageChanged($event)">
+  </pagination-controls>
+</div>
+<div *ngIf="SystemNotificationList.length == 0 && (TabId ==1 || TabId == 3) && SystemId == 2">
+  No Notifications Emails.
+</div>
+
+<!---------------------------Bounce Email Table------------------->
+<div *ngIf="manageEmailList.length > 0 && TabId == 4 " class="divradius">
+  <table #tableInput class="documents-table bordertable">
+    <thead>
+      <tr>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="emailId">Email</th>
+        <th scope="col" [appSort]="manageEmailList" data-order="desc" data-name="createdOn">Created On</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of manageEmailList | paginate: config">
+        <td>{{item.emailId}}</td>
+        <td>{{item.createdOn | date: 'MMM dd, yyy'}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls *ngIf="manageEmailList.length > 0" (pageChange)="pageChanged($event)">
+  </pagination-controls>
+</div>
+<div *ngIf="manageEmailList.length == 0 && TabId ==4">
+  No Bounce Emails.
+</div>
+
+<!-------------------------------------Sent Mail Details Popup Show----------------------------------------------->
+<div class="modal modal_outer right_modal fade" id="showSendEmailDetails" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="showSendEmailDetails">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Campaign Report</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+          (click)="showSendEmailDetails = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="modal-content pt-0">
+          <div class="row mt-3">
+            <div class="col">
+              <h3><label for="subject" class="">Subject</label></h3>
+              {{credorEmailDetail.subject}}
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col">
+              <h3><label for="recipient" class="">Recipient</label></h3>
+              <div *ngFor="let email of emailRecipientGroups">
+                {{email.emailRecipientGroupName}}
+              </div>
+            </div>
+            <div class="col" *ngIf="EmailGroupList.length > 0">
+              <h3><label for="recipient" class="">Individual Recipient</label></h3>
+              {{EmailGroupList.length}}
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col">
+              <h3><label for="recipient" class="">Attachment</label></h3>
+              <div *ngFor="let file of emailAttachments">
+                {{file.fileName}}
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col">
+              <h3><label for="recipient" class="">Created On</label></h3>
+              {{credorEmailDetail.createdOn | date: 'MMM dd, yyy'}}
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col">
+              <h3 *ngIf = "credorEmailDetail.scheduledOn == null"><label for="recipient" class="">Scheduled</label></h3>
+              <h3 *ngIf = "credorEmailDetail.scheduledOn != null"><label for="recipient" class="">Scheduled On</label></h3>
+              <div *ngIf = "credorEmailDetail.scheduledOn == null"> No</div>
+              <div *ngIf = "credorEmailDetail.scheduledOn != null"> {{credorEmailDetail.scheduledOn | date: 'MMM dd, yyy'}}</div>
+              <!-- {{credorEmailDetail.scheduledOn != null ? credorEmailDetail.scheduledOn : 'No'}} -->
+            </div>
+          </div>
+          <!-- <table class="documents-table">
+            <thead>
+              <tr>
+                <th scope="col">Sent to</th>
+                <th scope="col">Delivered</th>
+                <th scope="col">Opened</th>
+                <th scope="col">Clicked</th>
+                <th scope="col">Bounced</th>
+                <th scope="col">Forward</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{credorEmailDetail.sentTo != null ? credorEmailDetail.sentTo : 0}}</td>
+                <td>{{credorEmailDetail.delivered != null ? credorEmailDetail.delivered : 0 }}</td>
+                <td>{{credorEmailDetail.opened != null ? credorEmailDetail.opened : 0 }}</td>
+                <td>{{credorEmailDetail.clicked != null ? credorEmailDetail.clicked : 0 }}</td>
+                <td>{{credorEmailDetail.bounced != null ? credorEmailDetail.bounced : 0 }}</td>
+                <td>
+                  <span id="viewdetails_viewfile" class="action-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                      <path d="M0 0h24v24H0V0z" fill="none" />
+                      <path
+                        d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+                    </svg>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table> -->
+          <button class="button mr-3" *ngIf="credorEmails.length > 0" (click)="ExcelTableExport1()">Export To Excel</button>
+          <button class="button mr-3" (click)="MailPopupRefresh()">Refresh</button>
+          <table #tableInput1 class="documents-table" *ngIf="credorEmails.length > 0">
+            <thead>
+              <tr>
+                <th scope="col" [appSort]="credorEmails" data-order="desc" data-name="recipientEmailId">Sent to</th>
+                <th scope="col">Delivered</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of credorEmails">
+                <td>{{item.recipientEmailId != null ? item.recipientEmailId : '-'}}</td>
+                <td *ngIf = "item.status == 5">Pending</td>
+                <td *ngIf = "item.status == 4">Failed</td>
+                <td *ngIf = "item.status == 3">Archived</td>
+                <td *ngIf = "item.status == 2">Failed</td>
+                <td *ngIf = "item.status == 1">Draft</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-------------------------------------Preview Template popup Show----------------------------------------------->
+<div class="modal modal_outer right_modal fade" id="showPreview" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="showPreview">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Preview</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="showPreview = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="modal-content pt-0">
+          <div [innerHtml]="emailTemplate | safeHtml"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-------------------------------------Edit Draft Mail popup Show----------------------------------------------->
+<div class="modal modal_outer right_modal fade" id="showEditEmail" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="showEditEmail">
+  <div class="modal-dialog" role="document" style="width: 1000px;">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Update Email</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="showEditEmail = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="modal-content pt-0">
+          <app-send-email (messageEvent)="receiveMessage()" [childMessage]="parentMessage"></app-send-email>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-----------------------------------Delete Draft Email Conformation PopUp ------------------------->
+<div class="modal modal_outer right_modal fade" id="delDraftConformationShow" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="delDraftConformationShow">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h2>Delete Email</h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="delDraftConformationShow = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="modal-content pt-0" >
+          Are you sure you want to permanently delete this email?
+        </div>
+        <div class="modal-footer">
+          <button id="portfolio_distributionhisdelshow_yes" class="button-outline mr-3" (click)="DeleteDraftItems()"
+            data-dismiss="modal">Yes</button>
+          <button id="portfolio_distributionhisdelshow_no" type="button" class="button"
+            (click)="cancelDeleteDraftItems()" data-dismiss="modal">
+            <span>No</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

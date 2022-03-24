@@ -1,48 +1,36 @@
-<!-- Header Start -->
-<header>
-  <div [ngClass]="UserId != null ?'main-header' : 'login-main-header pr-5 pl-5'">
-    <nav class="header-nav d-flex align-items-center justify-content-between p-0">
-      <div class="brand-wrapper">
-        <img src="../../assets/images/Credor-logo.png" class="" alt="credor-logo" width="100px">
-      </div>
-      <div class="nav-right">
-        <ul class="d-flex">
-          <li class="nav-link" *ngIf="UserId != null" routerLink='/invest' routerLinkActive="active">Invest</li>
-          <li class="nav-link" *ngIf="UserId != null" routerLink='/myinvestment' routerLinkActive="active">Dashboard
-          </li>
-          <li class="nav-link">About Us</li>
-          <li class="nav-link">Contact</li>
-          <li class="nav-link" *ngIf="UserId == null" routerLink='/login' routerLinkActive="active">Login</li>
-          <li class="nav-link" *ngIf="UserId == null" routerLink='/register' routerLinkActive="active">Sign up</li>
-        </ul>
-      </div>
-    </nav>
-  </div>
-</header>
-<!-- Header End -->
+<div class="login-content-wrapper container-fluid">
 
+  <div class="row justify-content-center marginbtm ">
+    <div class="col-md-10 ">
+      <div class="row">
+    <div class="col-sm-6  ">
 
-<div class="login-content-wrapper">
-  <div class="row">
-    <div class="col-sm-6 d-flex align-items-center justify-content-center">
+      <div class="w-100 text-center"><img src="../../assets/images/signup.gif" style="width:100%"></div>
       <div class="login-main-text text-center">
-        <h1>
+        <h1 class="signuptxt">
           Join Our Community
         </h1>
         <p class="pt-0">Create an account for full access today.</p>
       </div>
     </div>
+
+
+
     <div class="col-sm-6">
       <div class="login-container">
         <div class="auth-wrapper w-100">
-          <div class="card" *ngIf="form1">
+          <div class="card" style="border:0px solid !important" *ngIf="form1">
             <h2 class="text-center mt-4 mb-4">Sign up</h2>
-            <form [formGroup]="registerForm">
-              <div class="row">
+
+
+            <form [formGroup]="registerForm" id="rf" class="px-4 pb-3">
+
+              <div class="container">
+               <div class="row">
                 <div class="col pl-0">
                   <div class="field-group">
                     <label for="firstname" class="">First Name</label>
-                    <input type="text" class="input-field" placeholder="Enter the First Name" id="firstname"
+                    <input type="text" class="input-field" placeholder="Enter the First Name" id="register_rf_firstname"
                       formControlName="Firstname" [ngClass]="{ 'is-invalid': submitted && f.Firstname.errors }"
                       (keyup)="onFirstname($event)">
                     <div *ngIf="FirstNameNull || FirstNameInvalid || FirstNameSpace" class="validation-msg">
@@ -55,7 +43,7 @@
                 <div class="col pr-0">
                   <div class="field-group">
                     <label for="lastname" class="">Last Name</label>
-                    <input type="text" class="input-field" placeholder="Enter the Last Name" id="lastname"
+                    <input type="text" class="input-field" placeholder="Enter the Last Name" id="register_rf_lastname"
                       formControlName="Lastname" [ngClass]="{ 'is-invalid': submitted && f.Lastname.errors }"
                       (keyup)="onLastname($event)">
                     <div *ngIf="LastNameNull || LastNameInvalid || LastNameSpace" class="validation-msg">
@@ -71,7 +59,7 @@
                 <div class="col pl-0 pr-0">
                   <div class="field-group">
                     <label for="email" class="">Email</label>
-                    <input type="email" class="input-field" placeholder="Enter the Email" id="email"
+                    <input type="email" class="input-field" placeholder="Enter the Email" id="register_rf_email"
                       formControlName="Email" [ngClass]="{ 'is-invalid': submitted && f.Email.errors }"
                       (keyup)="onEmail($event)">
                     <div *ngIf="EmptyEmail || validEmail || CompanyUserDetailsbool" class="validation-msg">
@@ -86,7 +74,7 @@
                 <div class="col pl-0">
                   <div class="field-group">
                     <label for="phonenumber" class="">Phone Number</label>
-                    <input type="phonenumber" class="input-field" placeholder="Enter the Phone Number" id="phonenumber"
+                    <input type="phonenumber" class="input-field" placeholder="Enter the Phone Number" id="register_rf_phonenumber"
                       formControlName="Phonenumber" [ngClass]="{ 'is-invalid': submitted && f.Phonenumber.errors }"
                       minlength="10" maxlength="10" (keyup)="onPhoneNumber($event)"
                       (keypress)="numberValidation($event)">
@@ -99,7 +87,7 @@
                 <div class="col pr-0">
                   <div class="field-group">
                     <label for="residency" class="">Residency</label>
-                    <select class="input-field" id="province" name="province" (change)="onchange($event)"
+                    <select class="input-field" id="register_rf_residency" name="province" (change)="onchange($event)"
                       formControlName="Residency" [(ngModel)]="ResidencyId">
                       <option *ngFor="let item of Residency" [value]="item.id == 'null' ? '': item.id"
                         [selected]="item.id == ResidencyId">
@@ -116,7 +104,7 @@
                 <div class="col pl-0">
                   <div class="field-group">
                     <label for="country" class="">Country</label>
-                    <input type="text" class="input-field" placeholder="Enter the Country" id="country"
+                    <input type="text" class="input-field" placeholder="Enter the Country" id="register_rf_country"
                       formControlName="Country" [ngClass]="{ 'is-invalid': submitted && f.Country.errors }"
                       (keyup)="onCountry($event)">
                     <div *ngIf="CountryNull || CountryInvalid || CountrySpace" class="validation-msg">
@@ -141,20 +129,18 @@
                           </svg>
                         </div>
                         <div class="tooltip-text">
-                          Password must have one uppercase character.
-                          <br>Password must have one lowercase character.<br>Password must have one number.
-                          <br>Password must have one special character.<br>Password must be at least 8 characters. <br>
+                          Password must be at least 8 characters. Password must have one uppercase character,<br> one lowercase character, one number and one special character.
                         </div>
                       </div>
                     </div>
                     <div class="field-group">
                       <div class="input-field-group">
                         <input [type]="showPassword ? 'text' : 'password'" class="input-field"
-                          placeholder="Enter Password" id="password" formControlName="Password"
+                          placeholder="Enter Password" id="register_rf_createpassword" formControlName="Password"
                           [ngClass]="{ 'is-invalid': submitted && f.Password.errors }"
                           (keydown.space)="$event.preventDefault();" (keyup)="onPassword($event)">
                         <span class="input-field-btn view-pwd">
-                          <button class="button button-clear icon-only" (click)="Password()" type="button">
+                          <button id="register_rf_showpassword" class="button button-clear icon-only" (click)="Password()" type="button">
                             <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24"
                               width="20">
                               <path d="M0 0h24v24H0V0z" fill="none" />
@@ -191,15 +177,15 @@
                     </div>
                   </div>
                 </div>
-                <div class="col pr-0 pt-2">
+                <div class="col pr-0">
                   <label for="confirmpassword" class="">Confirm Password</label>
                   <div class="input-field-group">
-                    <input [type]="showConfrimPassword ? 'text' : 'password'" class="input-field mt-1"
+                    <input id="register_rf_confirmpassword" [type]="showConfrimPassword ? 'text' : 'password'" class="input-field mt-1"
                       placeholder="Re-enter Password" id="confirmpassword" formControlName="Confirmpassword"
                       [ngClass]="{ 'is-invalid': submitted && f.Confirmpassword.errors }"
                       (keydown.space)="$event.preventDefault();" (keyup)="onConfirmPassword($event)">
                     <span class="input-field-btn view-pwd">
-                      <button class="button button-clear icon-only" (click)="ConfirmPassword()" type="button">
+                      <button id="register_rf_showconfirmpassword" class="button button-clear icon-only" (click)="ConfirmPassword()" type="button">
                         <svg *ngIf="showConfrimPassword" xmlns="http://www.w3.org/2000/svg" height="20"
                           viewBox="0 0 24 24" width="20">
                           <path d="M0 0h24v24H0V0z" fill="none" />
@@ -221,20 +207,32 @@
                   </div>
                 </div>
               </div>
-              <button type="submit" class="button button-secondary w-100 mb-4"
+              <button id="register_rf_continue" type="submit" class="button button-secondary w-100 mt-3 mb-4"
                 (click)="Continue(registerForm.value)">Continue</button>
+
+
+              </div>
             </form>
+
+
+
+
           </div>
 
 
-          <div class="card" *ngIf="form2">
-            <h2 class="text-center  mb-4">Tell us more about you</h2>
-            <form [formGroup]="ContinueForm">
+          <div class="card" *ngIf="form2" style="border:0px solid !important">
+            <div>
+              <div id="investor_onback" class="backbtnimg" (click)="onBack()"> <img class="backimg"
+                  src="../../assets/images/icons/back.svg"></div>
+            </div>
+            <h2 class="text-center  mt-4 mb-4">Tell us more about you</h2>
+            <form [formGroup]="ContinueForm" id="cf" class="px-4">
+              <div class="container">
               <div class="row">
                 <div class="col pl-0">
                   <div class="field-group">
                     <label for="residency" class="">I am looking to invest</label>
-                    <select class="input-field" id="invest" name="invest" (change)="onlookinvest($event)"
+                    <select class="input-field" id="register_cf_iamlookingtoinvest" name="invest" (change)="onlookinvest($event)"
                       formControlName="Invest" [(ngModel)]="LookingInvestId">
                       <option *ngFor="let item of LookingInvest" [value]="item.id"
                         [selected]="item.id == LookingInvestId">
@@ -250,11 +248,11 @@
                   <div class="field-group">
 
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                      <label for="residency" class="">Are you an<span (click)="AccredPopup = true"><a class="link"
+                      <label for="residency" class="mb-0">Are you an<span (click)="AccredPopup = true" data-toggle="modal" data-target="#AccredPopup"><a class="link"
                             href="javascript:void(0);"> accredited investor?</a></span></label>
                     </div>
 
-                    <select class="input-field" id="creditedinvestor" name="creditedinvestor"
+                    <select class="input-field" id="register_cf_creditedinvestor" name="creditedinvestor"
                       (change)="oninvestor($event)" formControlName="Creditedinvestor"
                       [(ngModel)]="AccreditedInvestorId">
                       <option *ngFor="let item of AccreditedInvestor" [value]="item.id"
@@ -275,61 +273,105 @@
 
                   <div class="field-group">
                     <label for="aboutus" class="">How did you hear about us?</label>
-                    <textarea type="text" class="input-field" placeholder="Enter here" id="aboutus"
+                    <textarea type="text" class="input-field" id="register_cf_howdidyouhear"
                       formControlName="Aboutus" (keyup)="onAboutus()"></textarea>
-                    <div *ngIf="Aboutusbool" class="validation-msg">How did you hear about us is required</div>
+                      <div *ngIf="Aboutusbool ||  AboutusSpace" class="validation-msg">
+                        <div *ngIf="AboutusSpace">Empty spaces are not allowed</div>
+                        <div *ngIf="Aboutusbool">How did you hear about us is required</div>
+                      </div>
                   </div>
                 </div>
               </div>
               <div class="field-group">
                 <label for="investorTerms">
-                  <input type="checkbox" name="" id="investorTerms" (change)="checkValue($event)"
+                  <input type="checkbox" name="" id="register_cf_investorterms" (change)="checkValue($event)"
                     formControlName="Investorterms">
-                  <span class="ml-2">I have reviewed and to the <a class="link" href="javascript:void(0);" (click)="onTermsandConditions()">Terms of
+                  <span class="ml-2">I have reviewed and to the <a id="register_cf_termsandconditions" class="link" href="javascript:void(0);" (click)="onTermsandConditions()">Terms of
                       Service</a>
-                    and <a class="link" href="javascript:void(0);" (click)="onPrivacyPolicy()">Privacy Policy</a></span>
+                    and <a id="register_cf_privacypolicy" class="link" href="javascript:void(0);" (click)="onPrivacyPolicy()">Privacy Policy</a></span>
                 </label>
                 <div *ngIf="Investorcheckbool" class="validation-msg">
                   Please check the above box to indicate acceptance of Credor Terms of Service and Privacy Policy
                 </div>
               </div>
-              <button type="submit" class="button button-secondary w-100" [disabled]="registerdisabledBool"
+              <button id="register_cf_register" type="submit" class="button button-secondary w-100 mt-3" [disabled]="registerdisabledBool"
                 (click)="Register()">Register</button>
+
+            </div>
             </form>
-            <div class="text-center mt-4">Already have an account?
-              <a href="javascript:void(0);" (click)="Login()">Login here</a>
+            <div class=" text-center mt-3 pb-4">Already have an account?
+              <a class="link" id="register_loginhere" href="javascript:void(0);" (click)="Login()">Login here</a>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+
+</div>
+
+</div>
+
+
+
+<div class="row p-3 footerbg">
+  
+  
+  <div class="col-md-6">
+  <div class="copytxt"><strong>Copyright © Credor</strong> - 2022 All rights reserved</div>
+  </div>
+  <div class="col-md-6 text-right">
+  <div class="privtxt"><a routerLink='/privacy-policy'>Privacy Policy</a> &nbsp; &nbsp; <a routerLink='/terms-and-conditions'>Terms and Conditions</a></div>
+  </div>
+    </div>
+
+
+
+
   <div class="loader" *ngIf="Loader">
     <div class="dot-flashing"></div>
   </div>
 </div>
-<div class="modal-wrapper" *ngIf="AccredPopup">
-  <div class="modal">
-    <div class="modal-title">
-      <h3>Accredited Investor</h3>
-    </div>
-    <div class="modal-content" style="max-height: 400px;overflow:auto;">
-      <div>
-        An Accredited Investor is defined by the Securities and Exchange Commission to include a natural person with:
+
+
+
+
+
+
+
+<div class="modal modal_outer right_modal fade" id="AccredPopup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="AccredPopup">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content ">
+          <div class="modal-header">
+            <h3>Accredited Investor</h3>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+          </div>
+          <div class="modal-body get_quote_view_modal_body">
+            <div class="modal-content" style="max-height: 400px;overflow:auto;">
+              <div>
+                An Accredited Investor is defined by the Securities and Exchange Commission to include a natural person with:
+              </div>
+              <ul>
+                <li>
+                  A net worth or joint net worth with the persons spouse exceeding $1 million, not including the value of the
+                  primary residence, and / or
+                </li>
+                <li>
+                  An annual income of $200,000 in each of the two most recent years, or joint income with a spouse exceeding
+                  $300,000 for those years and a reasonable expectation of the same income in the current year.
+                </li>
+              </ul>
+            </div>
+         <div class="modal-footer">
+          <button id="register_ap_okay" type="button" class="button-outline" data-dismiss="modal" (click)="AccredPopup=false">Okay</button>
+        </div>
+          </div>
       </div>
-      <ul>
-        <li>
-          A net worth or joint net worth with the persons spouse exceeding $1 million, not including the value of the
-          primary residence, and / or
-        </li>
-        <li>
-          An annual income of $200,000 in each of the two most recent years, or joint income with a spouse exceeding
-          $300,000 for those years and a reasonable expectation of the same income in the current year.
-        </li>
-      </ul>
-    </div>
-    <div class="modal-footer text-center">
-      <button type="button" class="button-outline" (click)="AccredPopup=false">Okay</button>
-    </div>
+      <!-- modal-content -->
   </div>
+  <!-- modal-dialog -->
 </div>
+<!-- modal -->

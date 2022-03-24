@@ -1,28 +1,33 @@
 .login-content-wrapper {
-    background-image: url(../../assets/images/cover_image.png);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-    min-height: calc(100vh - 64px);
-    padding-left: 30px;
-    padding-right: 30px;
-}
+    background: #fff3f4;
+    padding-top: 8%;
+    min-height: calc(100vh - 0px);
 
-.login-container {
-    background: #ffffff;
+}
+.input-field-btn {
+    top: 11px;
+}
+.link {
+    color: #c8202f;
+}
+.card{
     border-radius: 10px;
-    margin-top: 60px;
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    max-width: 750px;
-    min-height: 450px;
+    box-shadow: 0 2px 16px rgb(0 0 0 / 10%);
 }
-
-.auth-wrapper {
-    margin: 20px 35px;
+.input-field:hover {
+    box-shadow: 0 2px 16px rgb(0 0 0 / 10%);
+    height: 45px !important;
+    border: 0px solid #e9e9e9 !important;
 }
-
+.input-field {
+    box-shadow: 0 2px 16px rgb(0 0 0 / 10%);
+    height: 45px !important;
+    border: 0px solid #e9e9e9 !important;
+}
+.signuptxt{
+    font-size: 30px;
+    font-weight: bold;
+}
 .auth-wrapper a {
     text-decoration: none;
 }
@@ -33,4 +38,8 @@ input[type="text"]+.view-pwd svg {
 
 .modal-title {
     border-bottom: 1px solid var(--black-45);
+}
+
+.marginbtm{
+    margin-bottom: 50px;
 }

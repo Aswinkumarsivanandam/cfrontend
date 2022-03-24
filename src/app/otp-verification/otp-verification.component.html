@@ -1,1 +1,35 @@
-<p>otp-verification works!</p>
+
+<div class="login-content-wrapper">
+  <div class="row">
+    <div class="col-sm-5">
+      <div class="login-container">
+        <div class="auth-wrapper w-100 ">
+          <h2 class="text-center mb-4"> Email Verification</h2>
+          <p>Enter the One Time Password that has been emailed to you. You can update the email and click Resend Or select the option to receive the code via text.</p>
+          <div class="row">
+            <div class="col">
+              <label>Email</label>
+              <p>{{EmailId}}</p>
+              <button type="button" class="button-outline" (click)="ResetOtpEmail()">Resend</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <label>Phone Number</label>
+              <p>{{PhoneNumber}}</p>
+              <button type="button" class="button-outline">Text Code</button>
+            </div>
+          </div>
+          <div class="row">
+            <ng-otp-input id="acc_otpemail" (onInputChange)="onOtpChange($event)" [config]="{length:6}"></ng-otp-input>
+          </div>
+          <button id="login_submit" type="submit" class="button button-outline mt-3 " [disabled]="VerifyOtpDisabled" (click)="VerifyOtpEmailwithLogin()">Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loader" *ngIf="Loader">
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
+</div>

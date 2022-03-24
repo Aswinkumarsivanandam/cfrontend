@@ -6,18 +6,44 @@
     /*     justify-content: space-between;
  */
 }
+.card-image img {
+    width: 350px;
+    height: 312px;
+    object-fit: cover;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 22px;
+    border-radius: 15px !important;
+}
+.dealheight{
+    height: 124px;
+}
 agm-map {
   height: 300px !important;
   width: 100%;  /* This is really important*/
 }
-
+main{
+    padding: 0px;
+}
+.investpadding{
+    padding-left: 30px;
+    padding-right: 30px;
+}
 .bubble {
-    top: 12px;
-    right: 6px;
+    top: 3px;
+    right: -7px;
+}
+.highlights h3 {
+    font-size: 16px;
 }
 
 .bubble-inactive {
     background-color: #bbbbbb;
+}
+
+.highlights {
+    margin-right: 0px;
+    margin-top: 0px;
 }
 
 .deal-details-card-image {

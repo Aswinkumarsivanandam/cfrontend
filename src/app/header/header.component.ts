@@ -18,23 +18,45 @@ export class HeaderComponent implements OnInit {
   NotificationData: any = [];
   Notification: any = [];
   RoleId: any;
+  UserName: any;
+  sidemenuclick: boolean = true;
+
   // ProfileImg: any;
+  rmode: boolean = false;
   @Input() ProfileImg: any;
+  LoadMoreHide: boolean = false;
 
   constructor(private router: Router,
-    private accountService : AccountService,
+    private accountService: AccountService,
     private route: ActivatedRoute) { }
 
+
+  public sidemenu() {
+    // this.router.navigate(['./../side-bar'],{ relative: this.sidemenuclick});
+    this.router.navigateByUrl('./../side-bar', { state: { id: 1, name: this.sidemenuclick } });
+  }
+
+
   ngOnInit(): void {
-    this.UserId = Number(localStorage.getItem('UserId'));
-    this.RoleId = Number(localStorage.getItem("RoleId"));
-    this.ProfileImg = localStorage.getItem("ProfileImg");
+    if (window.name === 'Remote') {
+      this.RoleId = 1;
+      this.rmode = true;
+      this.UserId = Number(localStorage.getItem('InvestorId'));
+      this.ProfileImg = localStorage.getItem('I_profileurl')
+      this.UserName = localStorage.getItem("I_UserName");
+    } else {
+      this.RoleId = Number(localStorage.getItem("RoleId"))
+      this.rmode = false;
+      this.UserId = Number(localStorage.getItem("UserId"));
+      this.ProfileImg = localStorage.getItem("ProfileImg");
+      this.UserName = localStorage.getItem("UserName");
+    }
     this.GetNotification();
 
 
     const connection = new signalR.HubConnectionBuilder().configureLogging(signalR.LogLevel.Information)
-    .withUrl(environment.NOTIFICATION_URL + "/notificationHub")
-    .build();
+      .withUrl(environment.NOTIFICATION_URL + "/notificationHub")
+      .build();
 
     connection.start().then(function () {
       console.log('Connected!');
@@ -56,7 +78,7 @@ export class HeaderComponent implements OnInit {
     connection.on("Push_Notification", (data: any) => {
       this.thisUser = [];
       let UserId = Number(localStorage.getItem('UserId'));
-      if(data.userId == UserId){
+      if (data.userId == UserId) {
         this.NotificationData.unshift(data);
       }
     });
@@ -64,59 +86,106 @@ export class HeaderComponent implements OnInit {
   logout() {
     this.router.navigate(['/login'], { relativeTo: this.route });
     localStorage.clear();
+    // window.location.reload();
   }
   Account() {
-    this.router.navigate(['/account'], { relativeTo: this.route });
+    if (this.RoleId == 3) {
+      this.router.navigate(['./../settings'], { relativeTo: this.route });
+    }
+    else {
+      this.router.navigate(['./../account'], { relativeTo: this.route });
+    }
   }
-  GetNotification(){
-    this.accountService.GetNotification(this.UserId).subscribe(data =>{
+  GetNotification() {
+    this.NotificationData = [];
+    this.Notification = [];
+    this.accountService.GetNotification(this.UserId).subscribe(data => {
       this.NotificationData = data;
       this.NotificationData = this.NotificationData.filter((x: { status: number; }) => x.status == 1)
-      for(let i = 0; i< 5;i++){
-        this.Notification.push(this.NotificationData[i])
+      for (let i = 0; i < 5; i++) {
+        if (this.NotificationData[i].message != null)
+          this.Notification.push(this.NotificationData[i])
       }
     })
   }
-  NotificationClick(){
-    this.NotificationDropdown = !this.NotificationDropdown
+  NotificationClick() {
+    this.NotificationDropdown = true;
+    this.GetNotification();
   }
-  Read(val : any){
+  Read(val: any) {
     this.NotificationDropdown = true;
     this.Notification = this.Notification.filter((x: { id: any; }) => x.id != val.id);
     let notification = {
-      Id : val.id,
-      UserId : this.UserId,
-      Status : 2
+      Id: val.id,
+      UserId: this.UserId,
+      Status: 2
     }
-    this.accountService.UpdateNotification(notification).subscribe(data =>{
-      if(data == true){
+    this.accountService.UpdateNotification(notification).subscribe(data => {
+      if (data == true) {
         this.NotificationDropdown = true;
       }
     })
   }
-  ClearAll(){
+  ClearAll() {
     this.Notification = [];
-    this.accountService.ClearAllNotification(this.UserId).subscribe(data =>{
+    this.accountService.ClearAllNotification(this.UserId).subscribe(data => {
 
     })
   }
-  onLoadMore(){
+  onLoadMore() {
     let length = this.Notification.length + 5
-    for(let i = this.Notification.length; i< length; i++){
-      if(this.NotificationData[i] != null){
+    for (let i = this.Notification.length; i < length; i++) {
+      if (this.NotificationData[i] != null) {
         this.Notification.push(this.NotificationData[i])
       }
     }
+    if(this.NotificationData.length == this.Notification.length){
+      this.LoadMoreHide = true;
+    }
+    else{
+      this.LoadMoreHide = false;
+    }
   }
-  onLogo(){
-    if(this.RoleId == 1){
+  onLogo() {
+    if (this.RoleId == 1) {
       this.router.navigate(['/invest'], { relativeTo: this.route });
     }
-    else if(this.RoleId == 2){
+    else if (this.RoleId == 2) {
       this.router.navigate(['/invest'], { relativeTo: this.route });
     }
-    else if(this.RoleId == 3){
+    else if (this.RoleId == 3) {
       this.router.navigate(['/admin-dashboard'], { relativeTo: this.route });
     }
+  }
+  backToAdmin() {
+    localStorage.setItem("RoleId", '3')
+    window.close();
+  }
+
+  ProfileImageUpdate(e: any) {
+    if (e != null && e != this.ProfileImg) {
+      if(this.RoleId == 1){
+        this.router.navigateByUrl('/header', { skipLocationChange: true }).then(() => {
+          this.router.navigate(['/account']);
+        })
+      }
+      else if(this.RoleId == 3){
+        this.router.navigateByUrl('/header', { skipLocationChange: true }).then(() => {
+          this.router.navigate(['/settings']);
+        });
+      }
+    }
+  }
+
+  onAboutUs() {
+    // window.open("http://localhost:4200/aboutus")
+    // window.open("https://credor-app.azurewebsites.net/aboutus")
+    this.router.navigate(['/aboutus'], { relativeTo: this.route });
+  }
+
+  onContactUs() {
+    // window.open("http://localhost:4200/contactus")
+    // window.open("https://credor-app.azurewebsites.net/contactus")
+    this.router.navigate(['/contactus'], { relativeTo: this.route });
   }
 }

@@ -12,8 +12,8 @@ export class InvestService {
 
   constructor(private http : HttpClient,private router : Router) { }
 
-  GetMarketplace(){
-    return this.http.get(this.APIURL + '/Investment/GetOfferingsAndReservations',{ responseType: 'json' })
+  GetMarketplaceByUserId(UserId : any){
+    return this.http.get(this.APIURL + '/Investment/getofferingsandreservations/' + UserId,{ responseType: 'json' })
   }
   GetMarketplaceById(reservationId : any){
     return this.http.get(this.APIURL + '/Investment/getOfferingDetailById/'+ reservationId,{ responseType: 'json' })
@@ -29,5 +29,14 @@ export class InvestService {
   }
   GetHeaderDataByMyInvestment(UserId : any){
     return this.http.get(this.APIURL + '/MyInvestment/getheaderelements/' + UserId,{responseType : 'json'});
+  }
+  GetOfferingId(Id : any){
+    return this.http.get(this.APIURL + '/Investment/getofferingbyid/' + Id,{responseType : 'json'});
+  }
+  GetReserveById(Id : any){
+    return this.http.get(this.APIURL + '/Investment/getreservationbyid/' + Id,{responseType : 'json'});
+  }
+  GetPercentageRaised(Id : any){
+    return this.http.get(this.APIURL + '/Investment/GetPercentageRaised/' + Id,{responseType : 'json'});
   }
 }

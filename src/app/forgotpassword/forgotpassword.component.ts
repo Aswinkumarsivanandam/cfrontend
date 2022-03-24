@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { LoginService } from '../login/login.service';
@@ -9,6 +9,7 @@ import { LoginService } from '../login/login.service';
   styleUrls: ['./forgotpassword.component.css']
 })
 export class ForgotpasswordComponent implements OnInit {
+  @Input() parent:any;
   Forgotdata: any;
   result: any;
   UserData: any = [];
@@ -28,6 +29,7 @@ export class ForgotpasswordComponent implements OnInit {
   }
 
   GetResetLink() {
+    this.Loader = true;
     if (this.Forgotdata == null || this.Forgotdata == '' || this.userExists == true || this.userBool == true) {
       this.userBool = true;
       this.forgotdisabledBool = false;
@@ -39,6 +41,7 @@ export class ForgotpasswordComponent implements OnInit {
         this.userExists = false;
         this.userBool = true
       }
+      this.Loader = false;
     }
     else {
       this.Loader = true;
@@ -92,10 +95,12 @@ export class ForgotpasswordComponent implements OnInit {
             this.router.navigate(['./../login'], { relativeTo: this.route });
 
           }
+          this.forgotdisabledBool = false;
         }
         else {
           this.toastr.error("Invalid credentials",'Error!');
           this.Loader = false;
+          this.forgotdisabledBool = false;
         }
 
       })
@@ -103,7 +108,8 @@ export class ForgotpasswordComponent implements OnInit {
   }
 
   goToLogin() {
-    this.router.navigate(['./../login'], { relativeTo: this.route });
+    //this.router.navigate(['/login'], { relativeTo: this.route });
+   this.parent.backToLogin();
   }
   GetUser() {
     this.loginService.GetUser().subscribe(data => {

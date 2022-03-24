@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders} from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -25,8 +26,14 @@ export class InvestorService {
   UpdateInvestorTag(data : any){
     return this.http.put(this.APIURL + '/Investor/updateinvestortags',data,{responseType : 'json'});
   }
+  UpdateMultipleInvestorTag(data : any){
+    return this.http.put(this.APIURL + '/Investor/updatemultiinvestortags',data,{responseType : 'json'});
+  }
   GetInvestorNotes(InvestorId : any){
     return this.http.get(this.APIURL + '/Investor/getinvestornotes/' + InvestorId,{responseType : 'json'});
+  }
+  GetTagInvestors(TagId : any){
+    return this.http.get(this.APIURL + '/Investor/gettaginvestors/' + TagId,{responseType : 'json'});
   }
   AddInvestorNotes(data : any){
     return this.http.post(this.APIURL + '/Investor/addinvestornotes',data,{responseType : 'json'});
@@ -36,6 +43,12 @@ export class InvestorService {
   }
   DeleteInvestorNotes(UserId : any,InvestorId : any){
     return this.http.delete(this.APIURL + '/Investor/deleteinvestornotes/' + UserId + '/' + InvestorId,{responseType : 'json'});
+  }
+  DeleteTagDetailInvestor(TagId : any,UserId : any){
+    return this.http.delete(this.APIURL + '/Investor/DeleteTagDetailInvestor/' + TagId + '/' + UserId,{responseType : 'json'});
+  }
+  DeleteTagDetailMultiInvestor(TagId : any){
+    return this.http.delete(this.APIURL + '/Investor/DeleteTagDetailMultiInvestor/' + TagId, {responseType : 'json'});
   }
   ResetPassword(data : any){
     return this.http.put(this.APIURL + '/Investor/resetpassword',data,{responseType : 'json'});
@@ -89,30 +102,30 @@ export class InvestorService {
     return this.http.get(this.APIURL + '/Investor/getalluserprofile/'+InvestorId,{responseType : 'json'});
   }
   GetAllDocumentBatches(){
-    return this.http.get(this.APIURL + '/Investor/getalldocumentbatches',{responseType : 'json'});  
+    return this.http.get(this.APIURL + '/Investor/getalldocumentbatches',{responseType : 'json'});
   }
   GetDocumentNameDelimiters(){
-    return this.http.get(this.APIURL + '/Investor/getdocumentnamedelimiters',{responseType : 'json'});  
+    return this.http.get(this.APIURL + '/Investor/getdocumentnamedelimiters',{responseType : 'json'});
   }
   GetDocumentNamePositions(){
-    return this.http.get(this.APIURL + '/Investor/getdocumentnamepositions',{responseType : 'json'});  
+    return this.http.get(this.APIURL + '/Investor/getdocumentnamepositions',{responseType : 'json'});
   }
   GetDocumentNameSeparators(){
-    return this.http.get(this.APIURL + '/Investor/getdocumentnameseparators',{responseType : 'json'});  
+    return this.http.get(this.APIURL + '/Investor/getdocumentnameseparators',{responseType : 'json'});
   }
   GetDocumentTypes(){
-    return this.http.get(this.APIURL + '/Documents/getdocumenttypes',{responseType : 'json'});  
+    return this.http.get(this.APIURL + '/Documents/getdocumenttypes',{responseType : 'json'});
   }
   GetDocumentBatchDetail(batchId : any){
     return this.http.get(this.APIURL + '/Investor/getdocumentbatchdetail/' + batchId,{responseType : 'json'});
-  }  
+  }
   BulkDocumentUpload(formData : any){
     var headers =  new HttpHeaders({
       'enctype': 'multipart/form-data',
       'Accept': 'application/json'
     })
     return this.http.post(this.APIURL + '/Investor/bulkdocumentupload',formData,{headers : headers,responseType : 'json'});
-  }  
+  }
   PublishMatchedDocuments(formData : any){
     var headers =  new HttpHeaders({
       'enctype': 'multipart/form-data',
@@ -120,11 +133,24 @@ export class InvestorService {
     })
     return this.http.post(this.APIURL + '/Investor/publishmatcheddocuments',formData,{headers : headers,responseType : 'json'});
   }
+  UserDetailMatchedDocuments(formData : any){
+    var headers =  new HttpHeaders({
+      'enctype': 'multipart/form-data',
+      'Accept': 'application/json'
+    })
+    return this.http.post(this.APIURL + '/Investor/userdetailmatcheddocuments',formData,{headers : headers,responseType : 'json'});
+  }
   PublishMatchedDocument(formData : any){
     var headers =  new HttpHeaders({
       'enctype': 'multipart/form-data',
       'Accept': 'application/json'
     })
     return this.http.post(this.APIURL + '/Investor/publishmatcheddocument',formData,{headers : headers,responseType : 'json'});
+  }
+  GetAccountStatement(InvestorId : any){
+    return this.http.get(this.APIURL + '/Investor/getaccountstatement/' + InvestorId,{responseType : 'json'});
+  }
+  DownloadAccountStatement(account : any):Observable<any>{
+    return this.http.post(this.APIURL + '/Investor/AccountStatementPDF', account,{responseType : 'json'});
   }
 }

@@ -1,76 +1,110 @@
-<!-- Header Start -->
-<app-header></app-header>
-<!-- Header End -->
+<!--Body Content start-->
+<div class="">
+  
 
-
-<div class="content-wrapper">
-    <!-- Sidebar Start -->
-    <app-side-bar></app-side-bar>
-    <!-- Sidebar End -->
-
-    <!--Body Content start-->
-    <div class="main-container  m-4">
-        <div class="sub-header d-flex align-items-center justify-content-between pb-2">
-            <div class="">
-                <h3>Distributions</h3>
-                <p>For {{DistributionValue.length}} Investments</p>
-            </div>
-            <div class="d-flex">
-                <select class="mr-3" name="" id="" (change)="onOffering($event)">
-          <option *ngFor="let item of DropdownOffering" [value]="item.id == 'null' ? '': item.id"
-            [selected]="item.id == OfferingId">
-            {{ item.name }}
-          </option>
-        </select>
-                <select name="" id="" (change)="onProfile($event)">
-          <option *ngFor="let item of DropdownProfile" [value]="item.id == 'null' ? '': item.id"
-            [selected]="item.id == ProfileId">
-            {{ item.name }}
-          </option>
-        </select>
-            </div>
-
-        </div>
-
-        <div class="table-wrapper mt-4">
-            <div *ngIf="DistributionData.length == 0">
-                <p>No distributions for this investments...</p>
-            </div>
-            <div *ngIf="DistributionData.length != 0">
-                <table class="documents-table mt-3">
-                    <thead>
-                        <tr>
-                            <th scope="col">Offering</th>
-                            <th scope="col">Date</th>
-                            <th scope="col">Profile</th>
-                            <th scope="col">Amount</th>
-                            <th scope="col">Type</th>
-                            <th scope="col">Memo</th>
-                            <th scope="col">Method</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let item of DistributionData | paginate: config">
-                            <td>{{item.offeringName}}</td>
-                            <td>{{item.receivedDate | date}}</td>
-                            <td>{{item.ProfileName}}</td>
-                            <td>{{item.amountInvested| currency:'USD' : 'symbol' : '1.0-0'}}</td>
-                            <td>{{item.type}}</td>
-                            <td>{{item.memo}}</td>
-                            <td>{{item.distributionMethod}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <pagination-controls (pageChange)="pageChanged($event)"></pagination-controls>
-            </div>
-        </div>
+  <div class=" d-flex align-items-center justify-content-between px-4 pt-2 pb-3 divradius">
+    <div class="">
+      <h3 class="">Distributions</h3>
+      <p>For {{DistributionFooterData.totalInvestedCount}} Investments</p>
+    </div>
+    <div class="d-flex">
+      <select class="mr-3" name="" id="dist_offeringid" (change)="onOffering($event)">
+        <option *ngFor="let item of DropdownOffering" [value]="item.id == 'null' ? '': item.id"
+          [selected]="item.id == OfferingId">
+          {{ item.name }}
+        </option>
+      </select>
+      <select name="" id="dist_profileid" (change)="onProfile($event)">
+        <option *ngFor="let item of DropdownProfile" [value]="item.id == 'null' ? '': item.id"
+          [selected]="item.id == ProfileId">
+          {{ item.name }}
+        </option>
+      </select>
     </div>
 
-    <!--Body Content End-->
+  </div>
 
+  <div class="table-wrapper divradius mt-4">
+    <div class="nodata" *ngIf="DistributionData.length == 0">
+      <p>No distributions for this investments...</p>
+    </div>
+    <div *ngIf="DistributionData.length != 0">
+      <table #tableInput class="documents-table bordertable mt-3">
+        <thead>
+          <tr>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="offeringName">Offering</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="receivedDate">Date</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="ProfileName">Profile</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="amountInvested">Amount</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="type">Type</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="memo">Memo</th>
+            <th scope="col" [appSort]="DistributionData" data-order="desc" data-name="distributionMethod">Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of DistributionData | paginate: config">
+            <td>{{item.offeringName}}</td>
+            <td>{{item.receivedDate | date}}</td>
+            <td>{{item.userProfile}}</td>
+            <td>{{item.amountInvested| currency:'USD' : 'symbol' : '1.0-0'}}</td>
+            <td>{{item.type}}</td>
+            <td>{{item.memo}}</td>
+            <td>{{item.distributionMethod}}</td>
+          </tr>
+        </tbody>
+      </table>
 
+      <div class="d-flex p-3">
+        <div class="mr-3" *ngIf="DistributionFooterData.totalInvested != 0">
+          <h3>{{DistributionFooterData?.totalInvested | currency:'USD' : 'symbol' :
+            '1.0-0'}}</h3>
+          <p> Total Invested</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.gainFromSale != 0">
+          <h3>$ {{DistributionFooterData?.gainFromSale}}</h3>
+          <p> Gain from Sale</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.interest != 0">
+          <h3>$ {{DistributionFooterData?.interest}}</h3>
+          <p> Interest</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.operatingIncome != 0">
+          <h3>$ {{DistributionFooterData?.operatingIncome}}</h3>
+          <p> Operating Income</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.preferredReturn != 0">
+          <h3>$ {{DistributionFooterData?.preferredReturn}}</h3>
+          <p> Preferred Return</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.proceedsFromRefi != 0">
+          <h3>$ {{DistributionFooterData?.proceedsFromRefi}}</h3>
+          <p> Proceeds from Refi</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.retainedEarnings != 0">
+          <h3>$ {{DistributionFooterData?.retainedEarnings}}</h3>
+          <p> Retained Earning</p>
+        </div>
+        <div class="mr-3" *ngIf="DistributionFooterData.returnOfCapital != 0">
+          <h3>$ {{DistributionFooterData?.returnOfCapital}}</h3>
+          <p> Return of Capital</p>
+        </div>
+      </div>
 
+      <pagination-controls (pageChange)="pageChanged($event)"></pagination-controls>
+    </div>
+    <div style="float: right;margin-bottom: 10px;margin-top: 2px;" *ngIf="DistributionData.length > 0">
+      <button type="button" class="button-outline mr-3" (click)="ExcelTableExport()">Export as Excel</button>
+      <button type="button" class="button-outline" (click)="DownloadasPDF()">Download as PDF</button>
+    </div>
+  </div>
+ 
 </div>
+
+<!--Body Content End-->
+
+
+
+
 <div class="loader" *ngIf="Loader">
-    <div class="dot-flashing"></div>
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
 </div>

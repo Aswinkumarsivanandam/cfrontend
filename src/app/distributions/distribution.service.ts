@@ -14,4 +14,8 @@ export class DistributionService {
   GetDistributionByUserId(UserId : any){
     return this.http.get(this.APIURL + '/Distributions/getalldistributions/' + UserId,{responseType : 'json'});
   }
+
+  DownloadDistribution(UserId : any){
+    return this.http.post(this.APIURL + '/Distributions/downloaddistribution/' + UserId,{responseType : 'json'});
+  }
 }

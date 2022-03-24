@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { HeaderComponent } from '../header/header.component';
 import { LoginService } from '../login/login.service';
+import { SettingsService } from '../settings/settings.service';
 import { AccountService } from './account.service';
 
 @Component({
@@ -12,8 +13,9 @@ import { AccountService } from './account.service';
   styleUrls: ['./account.component.css']
 })
 export class AccountComponent implements OnInit {
-  @ViewChild('ProfileImg')
-  profile!: HeaderComponent;
+  @ViewChild(HeaderComponent) headerComponent : any;
+  // @ViewChild('ProfileImg')
+  // profile!: HeaderComponent;
   Selected: any;
   MyinfoShow: boolean = false;
   SharingShow: boolean = false;
@@ -101,17 +103,26 @@ export class AccountComponent implements OnInit {
   Notification: any = [];
   VerifyPhoneDisabled: boolean = false;
   VerifyEmailDisabled: boolean = false;
+  ProfileImageData: any;
+  TwoFactorAuthenticationPopup: boolean = false;
+  LoadMoreHide: boolean = false;
 
   constructor(private formbuilder: FormBuilder,
     private toastr: ToastrService,
     private route: ActivatedRoute,
     private router: Router,
     private loginService: LoginService,
-    private accountService: AccountService) { }
+    private accountService: AccountService,
+    private settingService : SettingsService) { }
 
   ngOnInit(): void {
     this.Loader = true;
-    this.UserId = Number(localStorage.getItem('UserId'));
+    if(window.name==='Remote'){
+      this.UserId=Number(localStorage.getItem('InvestorId'))
+    }
+    else{
+      this.UserId = Number(localStorage.getItem('UserId'));
+    }
     this.allowedFileExtensions = ['jpg', 'jpeg', 'png', 'PNG']
     this.AccountForm = this.formbuilder.group({
       FirstName: [''],
@@ -341,11 +352,12 @@ export class AccountComponent implements OnInit {
     }
   }
   onTwoFactor(e: any) {
+    this.TwoFactorAuthenticationPopup = true;
     if (this.AccountForm.value.TwoFactor == true) {
-      this.TwoFactor = true;
+      this.TwoFactor = false;
     }
     else {
-      this.TwoFactor = false;
+      this.TwoFactor = true;
     }
   }
   onReceiveEmail() {
@@ -539,10 +551,9 @@ export class AccountComponent implements OnInit {
   GetProfile() {
     this.accountService.GetProfile(this.UserId).subscribe(data => {
       this.UserData = data;
-      console.log(this.UserData, 'userdata')
       localStorage.removeItem("ProfileImg");
       localStorage.setItem('ProfileImg',this.UserData.profileImageUrl)
-      this.profile.ProfileImg = this.UserData.profileImageUrl;
+      // this.profile.ProfileImg = this.UserData.profileImageUrl;
       this.AccountForm.patchValue({
         FirstName: this.UserData.firstName,
         LastName: this.UserData.lastName,
@@ -577,6 +588,8 @@ export class AccountComponent implements OnInit {
         this.AddNewEmailShow = true;
       }
       this.ProfileImage.push({ profileImageUrl: this.UserData.profileImageUrl });
+      this.ProfileImageData = this.UserData.profileImageUrl;
+      this.headerComponent.ProfileImageUpdate(this.UserData.profileImageUrl);
       if (this.UserData.isEmailVerified == true) {
         this.EmailVerify = true;
       }
@@ -645,26 +658,25 @@ export class AccountComponent implements OnInit {
   onVerifyEmail(e: any) {
     this.Loader = true;
     if (e == "Phone") {
+      this.PhoneOtpPopup = true;
       this.Getotp = {
         Id: this.UserId,
         PhoneNumber: this.AccountForm.value.Phone
       }
     }
     else if (e == "Email") {
+      this.OtpPopup = true;
       this.Getotp = {
         Id: this.UserId,
         EmailId: this.AccountForm.value.Email
       }
     }
     this.accountService.SendOtp(this.Getotp).subscribe(data => {
-      console.log(data, 'otp')
       if (data == true) {
         if (e == "Email") {
-          this.OtpPopup = true;
           this.toastr.success("OTP send your respective emailid", 'Success!')
         }
         else if (e == "Phone") {
-          this.PhoneOtpPopup = true;
           this.toastr.success("OTP send your respective phone number", 'Success!')
         }
         this.Loader = false
@@ -683,26 +695,21 @@ export class AccountComponent implements OnInit {
   ResetOtpEmail(e: any) {
     this.Loader = true;
     if (e == "Phone") {
+      // this.PhoneOtpPopup = true;
       this.Getotp = {
         Id: this.UserId,
         PhoneNumber: this.AccountForm.value.Phone
       }
     }
     else if (e == "Email") {
+      // this.OtpPopup = true;
       this.Getotp = {
         Id: this.UserId,
         EmailId: this.AccountForm.value.Email
       }
     }
     this.accountService.ResendOtp(this.Getotp).subscribe(data => {
-      console.log(data, 'otp')
       if (data == true) {
-        if (e == "Email") {
-          this.OtpPopup = true;
-        }
-        else if (e == "Phone") {
-          this.PhoneOtpPopup = true;
-        }
         this.toastr.success("OTP resent successfully", "Success!")
         this.Loader = false;
       }
@@ -806,7 +813,6 @@ export class AccountComponent implements OnInit {
   GetUser() {
     this.loginService.GetUser().subscribe(data => {
       this.UserDetails = data;
-      console.log(this.UserDetails, 'userdetails')
     })
   }
   PermissionChange(e: any) {
@@ -845,7 +851,7 @@ export class AccountComponent implements OnInit {
         Title: this.AddUserForm.value.Title,
         EmailId: this.AddUserForm.value.Email,
         Permission: +this.PermissionId,
-        IsNotificationEnabled: this.AddUserForm.value.Notification
+        IsNotificationEnabled: this.AddUserForm.value.Notification != null ? true : false
       }
       if (this.EditUserId == 0) {
         this.accountService.AddNewUser(newuser).subscribe(data => {
@@ -854,6 +860,11 @@ export class AccountComponent implements OnInit {
             this.GetAccountAccesstoOthers()
             this.toastr.success("User added successfully", "Success!")
             this.Loader = false;
+          }
+          else{
+            this.Loader = false;
+            this.AddUserPopup = false;
+            this.toastr.error("User can't be added", "Error!")
           }
         })
       }
@@ -865,6 +876,11 @@ export class AccountComponent implements OnInit {
             this.toastr.success("User saved successfully", "Success!")
             this.Loader = false;
           }
+          else{
+            this.Loader = false;
+            this.AddUserPopup = false;
+            this.toastr.error("User can't be update", "Error!")
+          }
         })
       }
     }
@@ -872,7 +888,6 @@ export class AccountComponent implements OnInit {
   GetAccountAccesstoOthers() {
     this.accountService.GetAccountAccesstoOthers(this.UserId).subscribe(data => {
       this.AccountAccesstoOther = data;
-      console.log(this.AccountAccesstoOther, 'AccountAccesstoOther')
     })
   }
   onEditUser(val: any, e: any) {
@@ -907,7 +922,6 @@ export class AccountComponent implements OnInit {
   onDeleteUserConfirmation() {
     this.Loader = true;
     this.accountService.DeleteNewUser(this.UserId, this.UserDetailData.userId).subscribe(data => {
-      console.log(data, 'delete')
       if (data == true) {
         this.Loader = false;
         this.GetAccountAccesstoOthers();
@@ -926,7 +940,6 @@ export class AccountComponent implements OnInit {
     this.accountService.GetNotification(this.UserId).subscribe(data => {
       this.NotificationData = data;
       this.Notification = [];
-      console.log(this.NotificationData, 'NotificationData')
       for (let i = 0; i < 5; i++) {
         this.Notification.push(this.NotificationData[i])
       }
@@ -939,7 +952,35 @@ export class AccountComponent implements OnInit {
         this.Notification.push(this.NotificationData[i])
       }
     }
-    console.log(this.Notification, 'notification')
+    if(this.NotificationData.length == this.Notification.length){
+      this.LoadMoreHide = true;
+    }
+    else{
+      this.LoadMoreHide = false;
+    }
+  }
+
+  CancelTwoFactorAuthentication(){
+    this.AccountForm.patchValue({
+      TwoFactor: this.UserData.isTwoFactorAuthEnabled,
+    })
+  }
+
+  TwoFactorAuthentication(){
+    this.Loader = true;
+    let user = {
+      Id : this.UserId,
+      IsTwoFactorAuthEnabled : this.TwoFactor
+    }
+    this.settingService.UpdateTwoFactorAuthentication(user).subscribe(data =>{
+      if(data == true){
+        this.TwoFactorAuthenticationPopup = false;
+        this.GetProfile();
+      }
+      else{
+        this.Loader = false;
+      }
+    })
   }
 
 }

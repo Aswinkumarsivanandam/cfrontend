@@ -1,10 +1,13 @@
 import { flatten, ThrowStmt } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { FileHandle } from '../documents/file.directive';
 import { InvestorProfileService } from '../investor-profile/investor-profile.service';
 import { LeadService } from './lead.service';
+import { InvestorService } from '../investor/investor.service'
+import { LoginService } from '../login/login.service';
 
 @Component({
   selector: 'app-lead',
@@ -59,6 +62,11 @@ export class LeadComponent implements OnInit {
   EmailConfirmAccount1: any;
   AddLeadShow: boolean = false;
   AddLeadsShow: boolean = false;
+  TagDetailsViewPopup: boolean = false;
+  DeleteTagLeadsPopup: boolean = false;
+  TagLeads: any = [];
+  TagUserId: any;
+  Tagdetail: any = [];
   config: any;
   allowedFileExtensions: any = [];
   DocumentFile: any = [];
@@ -100,22 +108,39 @@ export class LeadComponent implements OnInit {
   TagName: any;
   TagDetailsList: any = [];
   TagDetails: any = [];
+  TagDetails1: any = [];
+  TagDetail: any = [];
+  MultiTag: any = [];
+  disabled = false;
   TagId: any = 0;
   ChooseBool: boolean = false;
   ResendInviteArray: any = [];
   ResendList: any = [];
-  InvestorEmpty : boolean = false;
+  InvestorEmpty: boolean = false;
   VerifyAccountData: any;
-  VerifyAccountPopup : boolean = false;
-  verifyuser : boolean = false;
-  VerifyAccountBool : boolean = false;
+  VerifyAccountPopup: boolean = false;
+  verifyuser: boolean = false;
+  VerifyAccountBool: boolean = false;
+  showSendEmail: boolean = false;
+  InvestorparentMessage: any;
+  dropdownSettings: any = {};
+  ShowFilter = false;
+  selectedItems: any = [];
+  TagDeleteButton: boolean = false;
+  MultiTagDeleteButton: boolean = false;
+  UserDetails: any = [];
+  EmailExists: boolean = false;
 
   constructor(private formBuilder: FormBuilder,
     private toastr: ToastrService,
     private leadService: LeadService,
+    private investorService: InvestorService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private loginService: LoginService,
     private profileService: InvestorProfileService) {
     this.config = {
-      itemsPerPage: 5,
+      itemsPerPage: 50,
       currentPage: 1,
       totalItems: this.LeadDetails.length
     };
@@ -146,6 +171,17 @@ export class LeadComponent implements OnInit {
     this.GetLeadSummary();
     this.GetLead();
     this.GetTag();
+    this.GetTagForMultiSelect();
+    this.GetUser();
+    this.dropdownSettings = {
+      singleSelection: false,
+      idField: 'id',
+      textField: 'name',
+      selectAllText: 'Select All',
+      unSelectAllText: 'UnSelect All',
+      itemsShowLimit: 5,
+      allowSearchFilter: this.ShowFilter
+    };
   }
   onAddLead() {
     this.AddLeadPopup = true;
@@ -157,6 +193,8 @@ export class LeadComponent implements OnInit {
     this.LeadLastnameError = false;
     this.AddLeadEmailError = false;
     this.validEmail = false;
+    this.EmailExists = false;
+    this.validEmail = false;
     this.DocSizeBool = false;
     this.filesToUpload = [];
     this.DocumentFile = [];
@@ -165,6 +203,7 @@ export class LeadComponent implements OnInit {
     this.ResidencyId = 0;
     this.LookingInvestId = 0;
     this.AccreditedInvestorId = 0;
+    this.EditDetailsShow = false;
   }
 
   onLeadFirstName() {
@@ -184,17 +223,26 @@ export class LeadComponent implements OnInit {
     }
   }
   onLeadEmail() {
+    let x = this.UserDetails.filter((x: { emailId: any; }) => x.emailId == this.AddLeadForm.value.Email)
     const validEmailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (this.AddLeadForm.value.Email == null || this.AddLeadForm.value.Email == ' ' || this.AddLeadForm.value.Email == '') {
       this.AddLeadEmailError = true;
       this.validEmail = false;
+      this.EmailExists = false;
     }
     else {
       this.AddLeadEmailError = false;
       if (validEmailRegEx.test(this.AddLeadForm.value.Email)) {
         this.validEmail = false;
+        if(x.length > 0){
+          this.EmailExists = true;
+        }
+        else{
+          this.EmailExists = false;
+        }
       } else {
         this.validEmail = true;
+        this.EmailExists = false;
       }
     }
   }
@@ -239,6 +287,19 @@ export class LeadComponent implements OnInit {
       this.CountryShow = false;
     }
   }
+
+  onlookinvest(e: any) {
+    this.AddLeadForm.get('Invest').setValue(e.target.value);
+    this.AddLeadForm.value.Invest = e.target.value;
+    this.LookingInvestId = +e.target.value;
+    if (this.LookingInvestId == null || this.LookingInvestId == '' || this.LookingInvestId == 0) {
+      this.lookInvestbool = true
+    }
+    else {
+      this.lookInvestbool = false
+    }
+  }
+
   oninvestor(e: any) {
     this.InvestorData = e.target.value;
     if (e.target.value == '1') {
@@ -268,7 +329,8 @@ export class LeadComponent implements OnInit {
     this.Loader = true;
     if (this.AddLeadForm.value.FirstName == null || this.AddLeadForm.value.FirstName == ''
       || this.AddLeadForm.value.LastName == null || this.AddLeadForm.value.LastName == ''
-      || this.AddLeadForm.value.Email == null || this.AddLeadForm.value.Email == '') {
+      || this.AddLeadForm.value.Email == null || this.AddLeadForm.value.Email == ''
+      || this.validEmail == true || this.EmailExists == true) {
       this.onLeadFirstName();
       this.onLeadLastName();
       this.onLeadEmail();
@@ -285,7 +347,7 @@ export class LeadComponent implements OnInit {
         PhoneNumber: this.AddLeadForm.value.Phonenumber,
         Residency: +this.ResidencyId,
         Country: this.AddLeadForm.value.Country,
-        Capacity: +this.LookingInvestId,
+        Capacity: +this.LookingInvestId == 0 ? null : +this.LookingInvestId,
         IsAccreditedInvestor: this.InvestorDatabool,
         HeardFrom: this.AddLeadForm.value.HowdidYouHear,
         VerifyAccount: this.AddLeadForm.value.VerifyAccount,
@@ -298,7 +360,6 @@ export class LeadComponent implements OnInit {
       }
       if (this.LeadEditId == 0) {
         this.leadService.CreateLead(lead).subscribe(data => {
-          console.log(data, 'leaddata')
           if (data == true) {
             this.GetLead();
             this.CancelLead();
@@ -315,7 +376,6 @@ export class LeadComponent implements OnInit {
       }
       else {
         this.leadService.UpdateLead(lead).subscribe(data => {
-          console.log(data, 'leaddata')
           if (data == 1) {
             this.GetLead();
             this.CancelLead();
@@ -333,9 +393,34 @@ export class LeadComponent implements OnInit {
 
     }
   }
+
+  onBulkLeadSave(event: any) {
+    this.Loader = true;
+    if (this.filesToUpload?.length > 0) {
+      const formData = new FormData();
+      this.filesToUpload.forEach((item: string | Blob) => {
+        formData.append('files', item);
+      });
+      this.leadService.BulkLeadSave(formData).subscribe(result => {
+        if (result) {
+          this.Loader = false;
+          this.AddLeadPopup = false;
+          this.filesToUpload = []
+          this.toastr.success("File Saved successfully.", "Success!");
+          this.GetLead();
+        }
+        else {
+          this.Loader = false;
+          this.filesToUpload = []
+          this.toastr.error("Invalid data in attachment", "Failure!");
+        }
+      })
+    }
+
+  }
   onChooseDataPerPage(event: any) {
     if (+event.target.value == 0) {
-      this.config.itemsPerPage = 5
+      this.config.itemsPerPage = 50
     }
     else {
       this.config.itemsPerPage = +event.target.value
@@ -420,8 +505,7 @@ export class LeadComponent implements OnInit {
         }
       }
       this.LeadDetails = this.LeadDetailsData,
-        console.log(this.LeadDetails, 'leaddetails')
-      this.Loader = false;
+        this.Loader = false;
     })
   }
   CancelLead() {
@@ -430,6 +514,10 @@ export class LeadComponent implements OnInit {
     this.AddLeadsShow = false;
     this.EditDetailsShow = false;
     this.AddLeadDetailsShow = false;
+    this.LeadFirstnameError = false;
+    this.LeadLastnameError = false;
+    this.AddLeadEmailError = false;
+    this.validEmail = false;
   }
   EditLead(val: any) {
     this.EditLeadData = val;
@@ -439,6 +527,11 @@ export class LeadComponent implements OnInit {
     this.AddLeadShow = true;
     this.AddLeadDetailsShow = false;
     this.AddLeadsShow = false;
+    this.LeadFirstnameError = false;
+    this.LeadLastnameError = false;
+    this.AddLeadEmailError = false;
+    this.validEmail = false;
+    this.EmailExists = false;
 
     this.AddLeadForm.patchValue({
       FirstName: this.EditLeadData.firstName,
@@ -456,7 +549,7 @@ export class LeadComponent implements OnInit {
       InvestmentAnnoucements: this.EditLeadData.newInvestmentAnnouncements,
     })
     this.ResidencyId = this.EditLeadData.residency;
-    this.LookingInvestId = this.EditLeadData.capacity;
+    this.LookingInvestId = this.EditLeadData.capacity == null ? 0 : this.EditLeadData.capacity;
     if (this.EditLeadData.residency == 1) {
       this.CountryShow = true;
     }
@@ -478,8 +571,7 @@ export class LeadComponent implements OnInit {
   }
   GetLeadSummary() {
     this.leadService.GetLeadSummary().subscribe(data => {
-      this.LeadSummary = data,
-        console.log(this.LeadSummary, 'leadsumary')
+      this.LeadSummary = data;
     })
   }
   pageChanged(event: any) {
@@ -487,8 +579,6 @@ export class LeadComponent implements OnInit {
   }
   onInvestCapFilter(e: any) {
     this.InvestCapId = +e.target.value
-    console.log(e.target.value, 'e')
-    console.log(this.LeadDetails, 'leaddetails')
     this.LeadDetails = [];
     if (this.InvestCapId == 0) {
       this.LeadDetails = this.LeadDetailsData;
@@ -669,17 +759,15 @@ export class LeadComponent implements OnInit {
         this.ResendInviteArray = [];
       }
     }
-    if(this.DeleteArray.length == 0 || this.TagDetailsList.length == 0){
+    if (this.DeleteArray.length == 0 || this.TagDetailsList.length == 0) {
       this.ChooseBool = true;
     }
     else {
       this.ChooseBool = false;
     }
-    console.log(this.DeleteArray, 'deletearray')
-    console.log(this.TagDetailsList, 'TagDetailsList')
-    console.log(this.ResendInviteArray, 'ResendInviteArray')
   }
   Select(e: any, e1: any) {
+    var tagList = [];
     if (e1.target.checked) {
       this.DeleteArray.push({ Id: e.id })
       this.TagDetailsList.push({ Id: 0, TagId: 0, UserId: e.id, Active: true })
@@ -690,23 +778,42 @@ export class LeadComponent implements OnInit {
       this.TagDetailsList = this.TagDetailsList.filter((x: { UserId: any; }) => x.UserId != e.id)
       this.ResendInviteArray = this.ResendInviteArray.filter((x: { id: any; }) => x.id != e.id)
     }
-    if(this.DeleteArray.length == 0 || this.TagDetailsList.length == 0){
+    if (this.DeleteArray.length == 0 || this.TagDetailsList.length == 0) {
       this.ChooseBool = true;
     }
     else {
       this.ChooseBool = false;
     }
-    console.log(this.DeleteArray, 'deletearray')
-    console.log(this.TagDetailsList, 'TagDetailsList')
-    console.log(this.ResendInviteArray, 'ResendInviteArray')
+    tagList = e.tags;
+    for (var i = 0; i < tagList.length; i++) {
+      if (this.Tagdetail.length > 0) {
+        var id = tagList[i].id;
+        let x = this.Tagdetail.filter((x: { id: any; }) => x.id == id)
+        if (x[0]) {
+        }
+        else {
+          this.Tagdetail.push({
+            'id': tagList[i].id,
+            'name': tagList[i].name
+          })
+        }
+      }
+      else {
+        this.Tagdetail.push({
+          'id': tagList[i].id,
+          'name': tagList[i].name
+        })
+      }
+    }
+    this.selectedItems = this.Tagdetail;
   }
 
   DeleteUser() {
-    if(this.DeleteArray.length == 0){
-      this.toastr.info("Please select any row from the table","Info!")
+    if (this.DeleteArray.length == 0) {
+      this.toastr.info("Please select any row from the table", "Info!")
       this.ChooseBool = true;
     }
-    else{
+    else {
       this.Loader = true;
       for (let i = 0; i < this.DeleteArray.length; i++) {
         this.DeleteList.push(this.DeleteArray[i].Id)
@@ -716,7 +823,6 @@ export class LeadComponent implements OnInit {
         Ids: this.DeleteList
       }
       this.leadService.DeleteLead(DeleteUser).subscribe(data => {
-        console.log(data, 'delete')
         if (data == 1) {
           this.GetLead();
           this.SelectAllCheckbox = false;
@@ -738,7 +844,6 @@ export class LeadComponent implements OnInit {
   }
   GetLeadId() {
     this.leadService.GetLeadNotes(this.NoteUserId).subscribe(data => {
-      console.log(data, 'leaddata')
       this.LeadData = data;
       if (this.LeadData.length > 0) {
         this.TableView = true;
@@ -772,7 +877,7 @@ export class LeadComponent implements OnInit {
           this.WriteNoteBool = false;
           this.GetLeadId();
         }
-        else{
+        else {
           this.Loader = false;
         }
       })
@@ -783,7 +888,7 @@ export class LeadComponent implements OnInit {
           this.WriteNoteBool = false;
           this.GetLeadId();
         }
-        else{
+        else {
           this.Loader = false;
         }
       })
@@ -803,7 +908,7 @@ export class LeadComponent implements OnInit {
         this.WriteNoteBool = false;
         this.GetLeadId();
       }
-      else{
+      else {
         this.Loader = false;
       }
     })
@@ -814,18 +919,18 @@ export class LeadComponent implements OnInit {
       this.TableView = true;
       this.Notes = this.LeadData[0].notes
     }
-    else{
+    else {
       this.InvestorEmpty = true;
     }
   }
   ResendInvite() {
     this.Loader = true;
-    if(this.ResendInviteArray.length == 0){
-      this.toastr.info("Please select any row from the table","Info!")
+    if (this.ResendInviteArray.length == 0) {
+      this.toastr.info("Please select any row from the table", "Info!")
       this.ChooseBool = true;
       this.Loader = false
     }
-    else{
+    else {
       for (let i = 0; i < this.ResendInviteArray.length; i++) {
         this.ResendList.push(this.ResendInviteArray[i].id)
       }
@@ -833,7 +938,7 @@ export class LeadComponent implements OnInit {
         AdminUserId: this.UserId,
         Ids: this.ResendList
       }
-      this.leadService.MultipleInviteLead(ResendUser).subscribe(data=>{
+      this.leadService.MultipleInviteLead(ResendUser).subscribe(data => {
         if (data == true) {
           this.Loader = false;
           this.ResendInvitePopup = false;
@@ -849,7 +954,6 @@ export class LeadComponent implements OnInit {
     }
   }
   onSingleResendInvite(e: any) {
-    console.log(e, 'singleinvite')
     this.Loader = true;
     this.leadService.SingleInviteLead(this.UserId, e.id).subscribe(data => {
       if (data == true) {
@@ -863,11 +967,11 @@ export class LeadComponent implements OnInit {
     })
   }
   onAddTag() {
-    if(this.DeleteArray.length == 0){
-      this.toastr.info("Please select any row from the table","Info!")
+    if (this.DeleteArray.length == 0) {
+      this.toastr.info("Please select any row from the table", "Info!")
       this.ChooseBool = true;
     }
-    else{
+    else {
       this.AddTagPopup = true;
       this.TagDetailsId = 0;
       this.TagName = ''
@@ -878,76 +982,200 @@ export class LeadComponent implements OnInit {
       let x = { id: 0, name: 'Select Tag', active: true }
       this.TagDetails = data;
       this.TagDetails.unshift(x);
-      console.log(this.TagDetails, 'tagdetails')
     })
   }
-  onSaveTag() {
-    this.Loader = true;
-    if (this.TagName == null || this.TagName == '') {
-      let x = this.TagDetails.filter((x: { name: any; }) => x.name == this.TagName)
+  GetTagForMultiSelect() {
+    this.leadService.GetLeadTag(this.UserId).subscribe(data => {
+      this.TagDetails1 = data;
       this.Loader = false;
-    }
-    else {
-      let x = this.TagDetails.filter((x: { name: any; }) => x.name == this.TagName)
-      if(x.length > 0){
-        this.TagId = x[0].id;
+    })
+  }
+  onItemSelect(item: any) {
+    this.selectedItems.push({ id: item.id, name: item.name })
+  }
+  onTags(e: any) {
+    this.TagId = e.id;
+    this.TagName = e.name;
+    this.TagLeads = [];
+    this.TagDetailsViewPopup = true;
+    this.leadService.GetTagLeads(this.TagId).subscribe(data => {
+      this.TagLeads = data;
+      this.Loader = false;
+    })
+  }
+  DeleteTagPopup(e: any) {
+    this.TagId = e.tagId;
+    this.TagUserId = e.userId;
+    this.DeleteTagLeadsPopup = true;
+    this.TagDeleteButton = true;
+    this.MultiTagDeleteButton = false;
+  }
+  DeleteMultiTagPopup(e: any) {
+    this.TagId = e;
+    this.DeleteTagLeadsPopup = true;
+    this.MultiTagDeleteButton = true;
+    this.TagDeleteButton = false;
+  }
+  OnLoadTags(e: any) {
+    this.TagLeads = [];
+    this.leadService.GetTagLeads(e).subscribe(data => {
+      this.TagLeads = data;
+      this.Loader = false;
+    })
+  }
+  clearSelection() {
+    this.AddTagPopup = false;
+    this.selectedItems = [];
+    this.MultiTag = [];
+    this.Tagdetail = [];
+    this.GetLead();
+  }
+  DeleteTagLeads() {
+    this.Loader = true;
+    var tagId = this.TagId;
+    var userId = this.TagUserId;
+    this.investorService.DeleteTagDetailInvestor(tagId, userId).subscribe(data => {
+      if (data == true) {
+        this.OnLoadTags(tagId);
+        this.Loader = false;
+        this.toastr.success("Tags Deleted successfully", "Success!")
+        this.GetLead();
       }
-      else{
-        this.TagId = 0;
+      else {
+        this.Loader = false;
       }
+      this.DeleteTagLeadsPopup = false
+      this.TagDeleteButton = false;
+    })
+  }
+
+  DeleteMultiTagLeads() {
+    this.Loader = true;
+    var tagId = this.TagId;
+    this.investorService.DeleteTagDetailMultiInvestor(tagId).subscribe(data => {
+      if (data == true) {
+        this.OnLoadTags(tagId);
+        this.toastr.success("Tags Deleted successfully", "Success!")
+        this.GetLead();
+        this.TagDetailsViewPopup = false;
+        this.Loader = false;
+      }
+      else {
+        this.Loader = false;
+      }
+      this.MultiTagDeleteButton = false;
+    })
+  }
+
+  onCreateTag() {
+    this.Loader = true;
+    if (this.TagName) {
       let Tag = {
-        Id: this.TagId != 0 ? this.TagId : 0,
+        Id: 0,
         AdminUserId: this.UserId,
         Name: this.TagName,
         Active: true,
         tagDetails: this.TagDetailsList
       }
-      if(this.TagId == 0){
-        this.leadService.AddLeadTag(Tag).subscribe(data => {
-          console.log(data, 'addlead')
-          if (data == true) {
-            this.AddTagPopup = false;
-            this.TagDetailsList = [];
-            this.DeleteArray = [];
-            this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
-            this.TagDetailsId = 0;
-            this.GetTag();
-            this.GetLead();
-            this.TagDetailsId = 0;
-          }
-          else {
-            this.AddTagPopup = false;
-            this.TagDetailsList = [];
-            this.DeleteArray = [];
-            this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
-            this.TagDetailsId = 0;
-            this.Loader = false;
-          }
-        })
-      }
-      else if(this.TagId != 0){
-        this.leadService.UpdateLeadTag(Tag).subscribe(data =>{
-          if(data == true){
-            this.AddTagPopup = false;
-            this.TagDetailsList = [];
-            this.DeleteArray = [];
-            this.TagDetailsId = 0;
-            this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
-            this.TagDetailsId = 0;
-            this.GetTag();
-            this.GetLead();
-          }
-          else {
-            this.AddTagPopup = false;
-            this.TagDetailsList = [];
-            this.DeleteArray = [];
-            this.TagDetailsId = 0;
-            this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
-            this.Loader = false;
-          }
-        })
-      }
+      this.leadService.AddLeadTag(Tag).subscribe(data => {
+        if (data) {
+          this.Loader = false;
+        }
+      });
     }
+    this.TagDetailsList = [];
+    this.AddTagPopup = false;
+    this.GetLead();
+  }
+
+  onSaveTag() {
+    this.Loader = true;
+    if (this.selectedItems.length > 0) {
+      for (let i = 0; i < this.selectedItems.length; i++) {
+        this.TagId = this.selectedItems[i].id;
+        this.TagName = this.selectedItems[i].name;
+        this.MultiTag.push({
+          Id: this.TagId != 0 ? this.TagId : 0, AdminUserId: this.UserId,
+          Name: this.TagName, Active: true,
+          tagDetails: this.TagDetailsList
+        });
+      }
+      this.leadService.UpdateMultiLeadTag(this.MultiTag).subscribe(data => {
+        if (data) {
+          this.AddTagPopup = false;
+          this.selectedItems = [];
+          this.MultiTag = [];
+          this.TagDetailsList = [];
+          this.Tagdetail = [];
+          this.GetLead();
+          this.Loader = false;
+        }
+      })
+    }
+    // if (this.TagName == null || this.TagName == '') {
+    //   let x = this.TagDetails.filter((x: { name: any; }) => x.name == this.TagName)
+    //   this.Loader = false;
+    // }
+    // else {
+    //   let x = this.TagDetails.filter((x: { name: any; }) => x.name == this.TagName)
+    //   if(x.length > 0){
+    //     this.TagId = x[0].id;
+    //   }
+    //   else{
+    //     this.TagId = 0;
+    //   }
+    //   let Tag = {
+    //     Id: this.TagId != 0 ? this.TagId : 0,
+    //     AdminUserId: this.UserId,
+    //     Name: this.TagName,
+    //     Active: true,
+    //     tagDetails: this.TagDetailsList
+    //   }
+    //   if(this.TagId == 0){
+    //     this.leadService.AddLeadTag(Tag).subscribe(data => {
+    //       if (data == true) {
+    //         this.AddTagPopup = false;
+    //         this.TagDetailsList = [];
+    //         this.DeleteArray = [];
+    //         this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
+    //         this.TagDetailsId = 0;
+    //         this.GetTag();
+    //         this.GetLead();
+    //         this.TagDetailsId = 0;
+    //       }
+    //       else {
+    //         this.AddTagPopup = false;
+    //         this.TagDetailsList = [];
+    //         this.DeleteArray = [];
+    //         this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
+    //         this.TagDetailsId = 0;
+    //         this.Loader = false;
+    //       }
+    //     })
+    //   }
+    //   else if(this.TagId != 0){
+    //     this.leadService.UpdateLeadTag(Tag).subscribe(data =>{
+    //       if(data == true){
+    //         this.AddTagPopup = false;
+    //         this.TagDetailsList = [];
+    //         this.DeleteArray = [];
+    //         this.TagDetailsId = 0;
+    //         this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
+    //         this.TagDetailsId = 0;
+    //         this.GetTag();
+    //         this.GetLead();
+    //       }
+    //       else {
+    //         this.AddTagPopup = false;
+    //         this.TagDetailsList = [];
+    //         this.DeleteArray = [];
+    //         this.TagDetailsId = 0;
+    //         this.LeadDetails.forEach((item: { selected: any; }) => item.selected = false);
+    //         this.Loader = false;
+    //       }
+    //     })
+    //   }
+    // }
 
   }
   onChooseTags(e: any) {
@@ -956,12 +1184,9 @@ export class LeadComponent implements OnInit {
       this.LeadDetails = this.LeadDetailsData;
     }
     else {
-      console.log(e.target.value, 'filtertag')
       let x = this.TagDetails.filter((x: { id: any; }) => x.id == a)
-      console.log(x, 'x')
       let b = x[0].tagDetails;
       this.LeadDetails = [];
-      console.log(this.LeadDetailsData, 'leaddata')
       for (let i = 0; i < b.length; i++) {
         let c = this.LeadDetailsData.filter((x: { id: any; }) => x.id == b[i].userId)
         if (c.length > 0) {
@@ -970,50 +1195,70 @@ export class LeadComponent implements OnInit {
       }
     }
   }
-  MultipleResendInvite(){
-    if(this.ResendInviteArray.length == 0){
-      this.toastr.info("Please select any row from the table","Info!")
+  MultipleResendInvite() {
+    if (this.ResendInviteArray.length == 0) {
+      this.toastr.info("Please select any row from the table", "Info!")
       this.ChooseBool = true;
     }
-    else{
+    else {
       this.ChooseBool = false;
       this.ResendInvitePopup = true;
     }
   }
-  RemoveResend(e : any){
+  RemoveResend(e: any) {
     let x = this.LeadDetails.filter((x: { id: any; }) => x.id == e.id)
     x[0].selected = false;
     this.ResendInviteArray = this.ResendInviteArray.filter((x: { id: any; }) => x.id != e.id)
   }
-  onVerifyAccount(val : any,e : any){
-    console.log(e,'ver')
+  onVerifyAccount(val: any, e: any) {
     this.VerifyAccountData = val;
     this.VerifyAccountBool = e;
-    console.log(this.VerifyAccountData,'VerifyAccountData')
     this.VerifyAccountPopup = true;
-    if(this.VerifyAccountBool == true){
+    if (this.VerifyAccountBool == true) {
       this.verifyuser = true;
     }
-    else{
+    else {
       this.verifyuser = false;
     }
   }
-  CancelVerifyAccount(){
+  CancelVerifyAccount() {
     this.Loader = true;
     this.VerifyAccountPopup = false;
     this.GetLead();
   }
-  onSaveVerifyAccount(){
+  onSaveVerifyAccount() {
     this.Loader = true;
-    this.leadService.VerifyAccount(this.UserId,this.VerifyAccountData.id,this.VerifyAccountBool).subscribe(data =>{
-      if(data == true){
+    this.leadService.VerifyAccount(this.UserId, this.VerifyAccountData.id, this.VerifyAccountBool).subscribe(data => {
+      if (data == true) {
         this.VerifyAccountPopup = false;
         this.GetLead();
       }
-      else{
+      else {
         this.VerifyAccountPopup = false;
         this.Loader = false;
       }
+    })
+  }
+
+  UserNameDetails(e: any) {
+    localStorage.setItem("InvestorId", e.id);
+    localStorage.setItem("RouteName", "Lead");
+    this.router.navigate(['./../user-details'], { relativeTo: this.route });
+  }
+
+  SentEmail() {
+    this.showSendEmail = true;
+    this.InvestorparentMessage = this.TagDetailsList;
+  }
+
+  receiveMessage() {
+    this.showSendEmail = false;
+    this.GetLead();
+  }
+
+  GetUser() {
+    this.loginService.GetUser().subscribe(data => {
+      this.UserDetails = data;
     })
   }
 }

@@ -1,12 +1,12 @@
 import { ThrowStmt } from '@angular/compiler';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild,Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { InvestorProfileService } from '../investor-profile/investor-profile.service';
 import { LoginService } from '../login/login.service';
 import { RegisterService } from './register.service';
-
+import { DOCUMENT } from '@angular/common';
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
@@ -77,6 +77,7 @@ export class RegisterComponent implements OnInit {
   UserId: any;
   Loader: boolean = false;
   Aboutusbool: boolean = false;
+  AboutusSpace: boolean = false;
 
   constructor(private formbuilder: FormBuilder,
     private router: Router,
@@ -84,9 +85,10 @@ export class RegisterComponent implements OnInit {
     private loginService: LoginService,
     private toastr: ToastrService,
     private profileService: InvestorProfileService,
-    private registerService: RegisterService) { }
+    private registerService: RegisterService,@Inject(DOCUMENT) private document: Document) { }
 
   ngOnInit(): void {
+    this.document.body.classList.remove('loginnav');
     this.UserId = localStorage.getItem('UserId');
     this.registerForm = this.formbuilder.group({
       Firstname: ['', Validators.required],
@@ -162,9 +164,14 @@ export class RegisterComponent implements OnInit {
       this.submitted = true;
     }
     else {
-      this.submitted = false;
-      this.form1 = false;
-      this.form2 = true;
+      if (this.registerForm.value.Password != this.registerForm.value.Confirmpassword ) {
+        this.ValidConfirmPassword = true
+      }
+      else{
+        this.submitted = false;
+        this.form1 = false;
+        this.form2 = true;
+      }
     }
   }
   get f() { return this.registerForm.controls }
@@ -227,11 +234,21 @@ export class RegisterComponent implements OnInit {
     }
   }
   onAboutus(){
+    const validaboutusRegEx = /^[a-zA-Z ]*$/;
+    const validaboutusspaceRegEx = /^(\s+\S+\s*)*(?!\s).*$/;
     if(this.ContinueForm.value.Aboutus == null || this.ContinueForm.value.Aboutus == ''){
       this.Aboutusbool = true;
+      this.AboutusSpace = false;
     }
     else{
       this.Aboutusbool = false;
+      if (validaboutusspaceRegEx.test(this.ContinueForm.value.Aboutus)) {
+        this.AboutusSpace = false;
+        this.Aboutusbool = false;
+      } else {
+        this.AboutusSpace = true;
+        this.Aboutusbool = false;
+      }
     }
   }
   Register() {
@@ -431,6 +448,12 @@ export class RegisterComponent implements OnInit {
     }
   }
   onPassword(e: any) {
+    this.EmptyPassword = false;
+      this.ValidLowercase = false;
+      this.ValidLengthcase = false;
+      this.ValidNumbercase = false;
+      this.ValidSpecialcase = false;
+      this.ValidUppercase = false;
     const validPasswordRegEx = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
     const validateLowercase = /^(?=.*?[a-z])/;
     const validateUppercase = /^(?=.*[A-Z])/;
@@ -441,35 +464,75 @@ export class RegisterComponent implements OnInit {
       this.EmptyPassword = true;
       this.ValidPassword = false;
     }
-    else {
+    else if(!validatelengthcase.test(e.target.value)){
       this.EmptyPassword = false;
-      if (validateLowercase.test(e.target.value)) {
-        this.ValidLowercase = false;
-      }
-      else {
-        this.ValidLowercase = true;
-      }
-      if (validateUppercase.test(e.target.value)) {
-        this.ValidUppercase = false;
-      } else {
-        this.ValidUppercase = true;
-      }
-      if (validateNumbercase.test(e.target.value)) {
-        this.ValidNumbercase = false;
-      } else {
-        this.ValidNumbercase = true;
-      }
-      if (validateSpecialcase.test(e.target.value)) {
-        this.ValidSpecialcase = false;
-      } else {
-        this.ValidSpecialcase = true;
-      }
-      if (validatelengthcase.test(e.target.value)) {
-        this.ValidLengthcase = false;
-      } else {
-        this.ValidLengthcase = true;
-      }
+      this.ValidLowercase = false;
+      this.ValidLengthcase = true;
+      this.ValidNumbercase = false;
+      this.ValidSpecialcase = false;
+      this.ValidUppercase = false;
     }
+    else if(!validateLowercase.test(e.target.value)){
+      this.EmptyPassword = false;
+      this.ValidLowercase = true;
+      this.ValidLengthcase = false;
+      this.ValidNumbercase = false;
+      this.ValidSpecialcase = false;
+      this.ValidUppercase = false;
+    }
+    else if(!validateUppercase.test(e.target.value)){
+      this.EmptyPassword = false;
+      this.ValidLowercase = false;
+      this.ValidLengthcase = false;
+      this.ValidNumbercase = false;
+      this.ValidSpecialcase = false;
+      this.ValidUppercase = true;
+    }
+    else if(!validateNumbercase.test(e.target.value)){
+      this.EmptyPassword = false;
+      this.ValidLowercase = false;
+      this.ValidLengthcase = false;
+      this.ValidNumbercase = true;
+      this.ValidSpecialcase = false;
+      this.ValidUppercase = false;
+    }
+    else if(!validateSpecialcase.test(e.target.value)){
+      this.EmptyPassword = false;
+      this.ValidLowercase = false;
+      this.ValidLengthcase = false;
+      this.ValidNumbercase = false;
+      this.ValidSpecialcase = true;
+      this.ValidUppercase = false;
+    }
+    // else {
+    //   this.EmptyPassword = false;
+    //   if (validateLowercase.test(e.target.value)) {
+    //     this.ValidLowercase = false;
+    //   }
+    //   else {
+    //     this.ValidLowercase = true;
+    //   }
+    //   if (validateUppercase.test(e.target.value)) {
+    //     this.ValidUppercase = false;
+    //   } else {
+    //     this.ValidUppercase = true;
+    //   }
+    //   if (validateNumbercase.test(e.target.value)) {
+    //     this.ValidNumbercase = false;
+    //   } else {
+    //     this.ValidNumbercase = true;
+    //   }
+    //   if (validateSpecialcase.test(e.target.value)) {
+    //     this.ValidSpecialcase = false;
+    //   } else {
+    //     this.ValidSpecialcase = true;
+    //   }
+    //   if (validatelengthcase.test(e.target.value)) {
+    //     this.ValidLengthcase = false;
+    //   } else {
+    //     this.ValidLengthcase = true;
+    //   }
+    // }
   }
 
   onConfirmPassword(event: any) {
@@ -533,6 +596,11 @@ export class RegisterComponent implements OnInit {
   onTermsandConditions(){
     // window.open("http://localhost:4200/terms-and-conditions")
     window.open("https://credor-app.azurewebsites.net/terms-and-conditions")
+  }
+
+  onBack() {
+    this.form1 = true;
+    this.form2 = false;
   }
 
 }

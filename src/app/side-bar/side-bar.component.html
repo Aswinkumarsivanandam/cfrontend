@@ -1,7 +1,8 @@
-<aside class="sidebar pt-4">
+<aside class="sidebar pt-4" >
   <nav class="side-nav">
     <div *ngFor="let item of RoleMapping">
-      <a class="nav-link" routerLink='/myinvestment' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'My Investments' && item.active == true">
+
+      <a id="sidebar_myinvestments" joyrideStep="box1" class="nav-link" routerLink='/myinvestment' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'My Investments' && item.active == true">
         <span class="icon-nav">
           <svg class="sub-menu-icon" xmlns="http://www.w3.org/2000/svg" height="18" width="18" viewBox="0 0 24 24"
             fill="none">
@@ -12,7 +13,8 @@
         </span>
         <span>My Investments</span>
       </a>
-      <a class="nav-link" routerLink='/update' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Updates' && item.active == true">
+
+      <a id="sidebar_updates" class="nav-link" routerLink='/update' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Updates' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="18px" viewBox="0 0 24 24"
             width="18px" fill="#000000">
@@ -29,7 +31,7 @@
         </span>
         <span>Updates</span>
       </a>
-      <a class="nav-link" routerLink='/distribution' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Distributions' && item.active == true">
+      <a id="sidebar_distributions" class="nav-link" routerLink='/distribution' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Distributions' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="18px" viewBox="0 0 24 24"
             width="18px" fill="#000000">
@@ -40,7 +42,7 @@
         </span>
         <span>Distributions</span>
       </a>
-      <a class="nav-link" routerLink='/investor-profile' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Profiles' && item.active == true">
+      <a id="sidebar_profiles" class="nav-link" routerLink='/investor-profile' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Profiles' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -51,7 +53,7 @@
         <span>Profiles</span>
       </a>
 
-      <a class="nav-link" routerLink='/document' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Documents' && item.active == true">
+      <a id="sidebar_document" class="nav-link" routerLink='/document' routerLinkActive="active" *ngIf="item.roleId == 1 && item.featureName == 'Documents' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="18px" viewBox="0 0 24 24"
             width="18px" fill="#000000">
@@ -78,7 +80,7 @@
         </span>
         <span>Account</span>
       </a> -->
-      <a class="nav-link" routerLink='/admin-dashboard' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Admin Dashboard' && item.active == true">
+      <a id="sidebar_admindashboard" class="nav-link" routerLink='/admin-dashboard' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Admin Dashboard' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -88,7 +90,7 @@
         </span>
         <span>Dashboard</span>
       </a>
-      <a class="nav-link" routerLink='/lead' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Leads' && item.active == true">
+      <a id="sidebar_leads" class="nav-link" routerLink='/lead' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Leads' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -98,7 +100,7 @@
         </span>
         <span>Leads</span>
       </a>
-      <a class="nav-link" routerLink='/investor' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Investors' && item.active == true">
+      <a id="sidebar_investors" class="nav-link" routerLink='/investor' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Investors' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -108,7 +110,7 @@
         </span>
         <span>Investors</span>
       </a>
-      <a class="nav-link" routerLink='/portfolio' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Portfolio' && item.active == true">
+      <a id="sidebar_portfolio" class="nav-link" routerLink='/portfolio' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Portfolio' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -117,7 +119,7 @@
           </svg> </span>
         <span>Portfolio</span>
       </a>
-      <a class="nav-link" routerLink='/email' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Email' && item.active == true">
+      <a id="sidebar_email" class="nav-link" routerLink='/email' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Email' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -126,7 +128,7 @@
           </svg> </span>
         <span>Email</span>
       </a>
-      <a class="nav-link" routerLink='/report' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Reports' && item.active == true">
+      <a id="sidebar_reports" class="nav-link" routerLink='/report' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Reports' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#000000">
             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -137,7 +139,7 @@
           </svg> </span>
         <span>Reports</span>
       </a>
-      <a class="nav-link" routerLink='/payment' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Payments' && item.active == true">
+      <!-- <a id="sidebar_payments" class="nav-link" routerLink='/payment' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Payments' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="18px" viewBox="0 0 24 24"
             width="18px" fill="#000000">
@@ -148,8 +150,8 @@
             </g>
           </svg> </span>
         <span>Payments</span>
-      </a>
-      <a class="nav-link" routerLink='/service' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Settings' && item.active == true">
+      </a> -->
+      <a id="sidebar_services" class="nav-link" routerLink='/settings' routerLinkActive="active" *ngIf="item.roleId == 3 && item.featureName == 'Settings' && item.active == true">
         <span class="icon-nav">
           <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 20 20" height="18px" viewBox="0 0 20 20"
             width="18px" fill="#000000">
@@ -165,7 +167,7 @@
               </g>
             </g>
           </svg> </span>
-        <span>Services</span>
+        <span>Settings</span>
       </a>
     </div>
   </nav>

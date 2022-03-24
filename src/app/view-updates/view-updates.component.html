@@ -1,0 +1,46 @@
+<span id="viewupdates_preview" class="action-icon" (click)="onPreview()" data-toggle="modal" data-target="#PreviewPopup">
+  <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+    <path d="M0 0h24v24H0V0z" fill="none" />
+    <path
+      d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+  </svg>
+</span>
+
+<div class="modal modal_outer right_modal fade" data-keyboard="false" data-backdrop="static" id="PreviewPopup"
+  tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" *ngIf="PreviewPopup">
+  <!-- tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" [style.display]="PreviewPopup ? 'block' : 'none'"> -->
+  <div class="modal-dialog" role="document" style="width:600px">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h2>{{content?.name}} - Updates</h2>
+          <div>Subject | {{content?.createdOn | date}}</div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="PreviewPopup = false">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="pt-3" style="">
+          <div class="modal-content pt-0 ">
+            <p>
+              {{content?.subject}}
+            </p>
+          <!-- <ckeditor [editor]="Editor" data="{{content?.content}}"  [disabled]="true">
+          </ckeditor> -->
+          <div *ngIf="Editorcontent != null">
+            <!-- <angular-editor [(ngModel)]="Editorcontent"  [config]="config"  [disabled]="true"></angular-editor> -->
+            <div [innerHtml]="Editorcontent | safeHtml"></div>
+          </div>
+          </div>
+          <div class="modal-footer text-center">
+            <button id="viewupdates_pp_cancel" type="button" class="button-outline-secondary" (click)="PreviewPopup=false">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="loader" *ngIf="Loader">
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
+</div>

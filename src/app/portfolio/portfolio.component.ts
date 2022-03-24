@@ -1,20 +1,90 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import InlineEditor from '@ckeditor/ckeditor5-build-inline';
 import { ToastrService } from 'ngx-toastr';
 import { PortfolioService } from './portfolio.service';
-import SwiperCore, { Pagination, Navigation } from "swiper/core";
+import SwiperCore, { Pagination, Navigation } from "swiper";
 import { FileHandle } from '../documents/file.directive';
+import * as XLSX from 'xlsx';
+import * as JSZip from 'jszip';
+import * as FileSaver from 'file-saver';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { AddReservationComponent } from '../add-reservation/add-reservation.component';
+import { AddInvestmentComponent } from '../add-investment/add-investment.component';
+import { IDropdownSettings } from 'ng-multiselect-dropdown';
+
+
 
 
 SwiperCore.use([Pagination, Navigation]);
+// export class UploadAdapter {
+//   private loader;
+//   constructor(loader: any) {
+//     this.loader = loader;
+//     console.log(this.readThis(loader.file));
+//   }
+
+//   public upload(): Promise<any> {
+//     //"data:image/png;base64,"+ btoa(binaryString)
+//     return this.readThis(this.loader.file);
+//   }
+
+//   readThis(file: File): Promise<any> {
+//     debugger
+//     console.log(file)
+//     let imagePromise: Promise<any> = new Promise((resolve, reject) => {
+//       var reader: FileReader = new FileReader();
+//       reader.onloadend = (e) => {
+//         let image = reader.result;
+//         console.log(image);
+//         return { default: "data:image/png;base64," + image };
+//         resolve({ default: reader.result });
+//       }
+//       reader.readAsDataURL(file);
+//     });
+//     console.log('file', file)
+//     return imagePromise;
+//   }
+
+class UploadAdapter {
+  private loader;
+  constructor(loader: any) {
+    this.loader = loader;
+  }
+
+  upload() {
+    return this.loader.file
+      .then((file: any) => new Promise((resolve, reject) => {
+        var myReader = new FileReader();
+        myReader.onloadend = (e) => {
+          resolve({ default: myReader.result });
+        }
+
+        myReader.readAsDataURL(file);
+      }));
+
+  };
+  //}
+
+  // onChange(e) {
+  //   let reader = new FileReader();
+  //   reader.onload = function(e) {
+  //       this.setState({file: reader.result})
+  //   }
+  //   reader.readAsDataURL(e.target.files[0]);
+  // }
+
+}
+
 @Component({
   selector: 'app-portfolio',
   templateUrl: './portfolio.component.html',
   styleUrls: ['./portfolio.component.css']
 })
 export class PortfolioComponent implements OnInit {
+  @ViewChild(AddInvestmentComponent) addInvestmentComponent: any
+  @ViewChild(AddReservationComponent) addReservationComponent: any;
   Selected: any;
   SelectedDistribution: any;
   PortfolioList: any = [];
@@ -26,7 +96,7 @@ export class PortfolioComponent implements OnInit {
   OfferingNameError: boolean = false;
   OfferingTypeId: any = 0;
   StatusId: any = 0;
-  VisibilityId: any = 0;
+  VisibilityId: any;
   OfferingStatusError: boolean = false;
   OfferingSizeZeroError: boolean = false;
   OfferingSizeError: boolean = false;
@@ -72,7 +142,10 @@ export class PortfolioComponent implements OnInit {
   GalleryList: any = [];
   SummaryList: any = [];
   DocumentList: any = [];
-  Editor: any = {};;
+  Editor: any = {};
+  UpdateTabView: boolean = false;
+  item: any;
+
   Markers: any = [];
   lat: any;
   lng: any;
@@ -89,6 +162,7 @@ export class PortfolioComponent implements OnInit {
   filesToUpload: any = [];
   allowedFileExtensions: any = [];
   allowedFileExtensionsDocument: any = [];
+  allowedFileExtensionsCSVDocument : any = [];
   profileImageUrl: any;
   UploadImage: any = [];
   TypeId: any;
@@ -99,8 +173,6 @@ export class PortfolioComponent implements OnInit {
   UploadToWelcomeFiles: any = [];
   UploadToOfferingFiles: any = [];
   PortfolioDocument: any;
-  DocumentViewPopup: boolean = false;
-  ViewFile: any;
   documentValue: any;
   documentType: any;
   DeleteDocumentPopup: boolean = false;
@@ -112,8 +184,11 @@ export class PortfolioComponent implements OnInit {
   keyDeleteShow: boolean = false;
   KeyValue: any;
   KeyValueId: any;
-  wireTransfer: any = 'true';
+  wireTransfer: any;
   byCheck: any;
+  byCheckEmail: any;
+  byCheckAccount: any;
+  byCheckCopy: any;
   custom: any;
   FundAmound: any;
   FundBankName: any;
@@ -121,7 +196,7 @@ export class PortfolioComponent implements OnInit {
   FundBeneficiaryAccountName: any;
   FundRoutingNumber: any;
   FundAccountNumber: any;
-  FundAccountType: any;
+  FundAccountType: any = 0;
   FundBeneficiaryAddress: any;
   FundReference: any;
   FundOtherInstructions: any;
@@ -149,7 +224,7 @@ export class PortfolioComponent implements OnInit {
   FundReceivedDate: any;
   DocsSignedDate: any;
   AddInvestmentForm: any;
-  AddNewReservationForm: any;
+  // AddNewReservationForm: any;
   UserTypeList: any = [];
   profileList: any = [];
   statusList: any = [];
@@ -197,7 +272,7 @@ export class PortfolioComponent implements OnInit {
   HistoryEndDateError: boolean = false;
   HistoryPaymentDateError: boolean = false;
   updateHistoryValue: any;
-  InvestorType :any = "1";
+  InvestorType: any = "1";
   DistributionList: any = [];
   CalculationId: any = 0;
   CalculationTypeError: boolean = false;
@@ -215,49 +290,96 @@ export class PortfolioComponent implements OnInit {
   capValueList: any = [];
   CalculateValueList: any = [];
   addDistributionId: any;
-  AllInvestorShow : boolean = false;
-  SingleInvestorShow : boolean = false;
-  InvestorNameList : any = [];
-  InvestorId : any = 0;
-  InvestorNameError : boolean = false;
-  PaymentBtnShow : boolean = true;
-  TotalAmount : any ;
-  OfferingTypeList: any = [
-    { id: 0, value: 'Select' },
-    { id: 1, value: 'Investment' },
-    { id: 2, value: 'Commitment' },
-  ];
-  OfferingStatusList: any = [
-    { id: 0, value: 'Select' },
-    { id: 1, value: 'Draft' },
-    { id: 2, value: 'Open' },
-    { id: 3, value: 'Manage' },
-    { id: 4, value: 'Past' },
-  ]
-  OfferingVisibilityList: any = [
-    { id: 0, value: 'Select Visibility' },
-    { id: 1, value: 'No Users' },
-    { id: 2, value: 'All Users' },
-    { id: 3, value: 'Verified Users' },
-    { id: 4, value: 'Accredited Only' },
-    { id: 5, value: 'Real Estate Offering name (will contain investors who participated in it)' },
-    { id: 6, value: 'Test (IT and Admin)' },
-  ]
-  ReservationStatusList: any = [
-    { id: 0, value: 'Select' },
-    { id: 1, value: 'Draft' },
-    { id: 2, value: 'Active-Accepting Reservations' },
-    { id: 3, value: 'Reservations Closed' },
-  ]
-  ReservationVisibilityList: any = [
-    { id: 0, value: 'Select Visibility' },
-    { id: 1, value: 'No Users' },
-    { id: 2, value: 'All Users' },
-    { id: 3, value: 'Verified Users' },
-    { id: 4, value: 'Accredited Only' },
-    { id: 5, value: 'Specific Investors who have invested in individual Offerings' },
-    { id: 6, value: 'Test (IT and Admin)' },
-  ]
+  AllInvestorShow: boolean = false;
+  SingleInvestorShow: boolean = false;
+  InvestorNameList: any = [];
+  InvestorId: any = 0;
+  InvestorNameError: boolean = false;
+  PaymentBtnShow: boolean = true;
+  TotalAmount: any;
+  InvestmentBtnShow: boolean = true;
+  OfferingReservationValue: any;
+  OfferingReservationDeleteShow: boolean = false;
+  importdistributionShow : boolean = false;
+  @ViewChild('tableInput') tableInput!: ElementRef;
+  @ViewChild('InvestorTableInput') InvestorTableInput!: ElementRef;
+  @ViewChild('OfferingReservationTable') OfferingReservationTable!: ElementRef;
+  @ViewChild('OfferingDistributionReview') OfferingDistributionReview!: ElementRef;
+  @ViewChild('ReservationTable') ReservationTable!: ElementRef;
+  @ViewChild('HistoryView') HistoryView!: ElementRef;
+  DocumentPath: any;
+  title = 'Excel';
+  NotePopup: boolean = false;
+  TableView: boolean = false;
+  OffReservationId: any;
+  ReservationNotesData: any = [];
+  InvestorNotes: any;
+  NotesEmpty: boolean = false;
+  WriteNoteBool: boolean = false;
+  EditBool: boolean = false;
+  EditReservationNoteId: any;
+  landingPageShow: boolean = false;
+  LinkToOffering: any;
+  statusLink: any;
+  LandingId: any = 2;
+  RaisedId: any = 2;
+  showRaised: any;
+  LandingName: any;
+  convertOffering: any;
+  ConvertPageShow: boolean = false;
+  subDeleteShow: boolean = false;
+  SubAndAccreditations: any;
+  DiffId: any;
+  ImportDistributionTabShow : boolean = false;
+  AccreditationsShow: boolean = false;
+  SubDocumentPath: any = [];
+  UpdateTabShow: boolean = false;
+  addUpdateShow: boolean = false;
+  UpdateDate: any;
+  UpdateSubject: any;
+  UpdateDateError: boolean = false;
+  UpdateSubjectError: boolean = false;
+  UpdateFromName: any;
+  UpdateReplyTo: any;
+  UpdateValue: any;
+  EmailList: any = [];
+  UpdateFromEmail: any = 0;
+  updateDeleteShow: boolean = false;
+  updateId: any;
+  Ckbool: boolean = false;
+  EsignTabShow: boolean = false;
+  OfferingTypeList: any = [];
+  MainOfferingStatusList: any = [];
+  OfferingStatusList: any = [];
+  ReservationStatusList : any = [];
+  FileUploadError : boolean = false;
+  DocumentValidCheck = "Maximum File Size 15MB | File Format CSV | Character Encoding UTF-8 {unicode} | 500 Leads per import";
+  // OfferingVisibilityList: any = [
+  //   { id: 0, value: 'Select Visibility' },
+  //   { id: 1, value: 'No Users' },
+  //   { id: 2, value: 'All Users' },
+  //   { id: 3, value: 'Verified Users' },
+  //   { id: 4, value: 'Accredited Only' },
+  //   { id: 5, value: 'Real Estate Offering name (will contain investors who participated in it)' },
+  //   { id: 6, value: 'Test (IT and Admin)' },
+  // ]
+  OfferingVisibilityList: any = [];
+  // ReservationStatusList: any = [
+  //   { id: 0, value: 'Select' },
+  //   { id: 1, value: 'Draft' },
+  //   { id: 2, value: 'Active-Accepting Reservations' },
+  //   { id: 3, value: 'Reservations Closed' },
+  // ]
+  // ReservationVisibilityList: any = [
+  //   { id: 0, value: 'Select Visibility' },
+  //   { id: 1, value: 'No Users' },
+  //   { id: 2, value: 'All Users' },
+  //   { id: 3, value: 'Verified Users' },
+  //   { id: 4, value: 'Accredited Only' },
+  //   { id: 5, value: 'Specific Investors who have invested in individual Offerings' },
+  //   { id: 6, value: 'Test (IT and Admin)' },
+  // ]
+  ReservationVisibilityList: any = [];
   AccountTypeList: any = [
     { id: 1, value: 'Checking' },
     { id: 2, value: 'Savings' }
@@ -282,9 +404,29 @@ export class PortfolioComponent implements OnInit {
     { id: 1, value: '% Funded' },
     { id: 2, value: '% Ownership' },
   ]
-  constructor(private _portfolio: PortfolioService, private router: Router, private route: ActivatedRoute, private formBuilder: FormBuilder, private toastr: ToastrService,) {
+  InvestorDataValue: any;
+  PortfolioData: any;
+  parentMessage: any;
+  IsDocumentPrivate: boolean = false;
+  DocumentPrivateConfirm: boolean = false;
+  PrivateConfirmMessage: any;
+  ToolipText: any;
+  dropdownSettings: IDropdownSettings = {};
+  OVisibilityList: any = [];
+  RVisibilityList: any = [];
+  VList: any = [];
+  EditOfferingVisibilityList: any = []
+  EditReservationVisibilityList: any = []
+  EditId: any;
+  NoAllVisibilityError: boolean = false;
+  FundingType: any = 0;
+  WireTransferShow: boolean = false;
+  DocumentFile : any = [];
+  DocSizeBool : boolean = false;
+  DocSizeCount: any;
+  constructor(private _portfolio: PortfolioService, private httpClient: HttpClient, private router: Router, private route: ActivatedRoute, private formBuilder: FormBuilder, private toastr: ToastrService,) {
     this.config = {
-      itemsPerPage: 5,
+      itemsPerPage: 100,
       currentPage: 1,
       totalItems: this.PortfolioList.length
     };
@@ -296,14 +438,23 @@ export class PortfolioComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.GetOfferingVisibilityList();
+    this.GetReservationVisibilityList();
     this.routeName = this.route.snapshot.params['name'];
     if (this.routeName == 'offering') {
       localStorage.setItem('RouteName', this.routeName);
       this.offeringId = +this.route.snapshot.params['id'];
+      this.item = {
+        id: this.offeringId
+      }
+      this.PortfolioData = {
+        id: this.offeringId
+      }
       this.AddInvestmentBtn = true;
       this.AddOfferAndReservationBtn = false;
       this.AddReservationBtn = false;
       this.ShowOfferingDetails = true;
+      this.ShowReservationDetails = false;
       this.getOfferingByStatus(this.offeringId);
       this.OfferingInformation();
       this.getInvestmentStatusList();
@@ -311,6 +462,13 @@ export class PortfolioComponent implements OnInit {
     else if (this.routeName == 'reservation') {
       localStorage.setItem('RouteName', this.routeName);
       this.reservationId = +this.route.snapshot.params['id'];
+      this.item = {
+        id: this.reservationId
+      }
+      this.InvestorDataValue = {
+        ReservationId: this.reservationId,
+        ModalName: 'Add'
+      }
       this.AddReservationBtn = true;
       this.AddOfferAndReservationBtn = false;
       this.AddInvestmentBtn = false;
@@ -340,6 +498,7 @@ export class PortfolioComponent implements OnInit {
     this.getInvestmentUserList();
     this.allowedFileExtensions = ['jpg', 'jpeg', 'png', 'PNG'];
     this.allowedFileExtensionsDocument = ['pdf', 'PDF'];
+    this.allowedFileExtensionsCSVDocument = ['csv', 'CSV','xlsx'];
     this.AddOfferingForm = this.formBuilder.group({
       OfferingName: ['', Validators.required],
       OfferingType: [''],
@@ -347,13 +506,13 @@ export class PortfolioComponent implements OnInit {
       Status: ['', Validators.required],
       OfferingSize: ['', Validators.required],
       MinimumInvestment: ['', Validators.required],
-      Visibility: ['', Validators.required],
+      // Visibility: ['', Validators.required],
     })
     this.AddReservationForm = this.formBuilder.group({
       ReservationName: ['', Validators.required],
       EntityName: [''],
       Status: [''],
-      Visibility: ['', Validators.required],
+      // Visibility: ['', Validators.required],
       ReservationSize: ['', Validators.required],
     })
     this.AddInvestmentForm = this.formBuilder.group({
@@ -365,13 +524,13 @@ export class PortfolioComponent implements OnInit {
       InvestmentFundReceived: [''],
       InvestmentDocsSigned: [''],
     })
-    this.AddNewReservationForm = this.formBuilder.group({
-      NewReservationName: [''],
-      ReservationUser: ['', Validators.required],
-      ReservationProfileType: ['', Validators.required],
-      ReservationAmount: ['', Validators.required],
-      ReservationLevel: ['', Validators.required],
-    })
+    // this.AddNewReservationForm = this.formBuilder.group({
+    //   NewReservationName: [''],
+    //   ReservationUser: ['', Validators.required],
+    //   ReservationProfileType: ['', Validators.required],
+    //   ReservationAmount: ['', Validators.required],
+    //   ReservationLevel: ['', Validators.required],
+    // })
     this.AddHistoryForm = this.formBuilder.group({
       HistoryType: ['', Validators.required],
       HistoryStartDate: ['', Validators.required],
@@ -384,7 +543,30 @@ export class PortfolioComponent implements OnInit {
       // HistoryAmount: ['', Validators.required],
       // HistoryMethod: ['', Validators.required]
     })
+    this.dropdownSettings = {
+      singleSelection: false,
+      idField: 'id',
+      textField: 'name',
+      selectAllText: 'Select All',
+      unSelectAllText: 'UnSelect All',
+      itemsShowLimit: 3,
+      allowSearchFilter: true,
+      enableCheckAll: true,
+    };
+    this.GetOfferingType();
+    this.GetOfferingStatus();
+  }
 
+  GetOfferingVisibilityList() {
+    this._portfolio.GetOfferingVisibilityList().subscribe(data => {
+      this.OfferingVisibilityList = data;
+    })
+  }
+
+  GetReservationVisibilityList() {
+    this._portfolio.GetReservationVisibilityList().subscribe(data => {
+      this.ReservationVisibilityList = data;
+    })
   }
 
   pageChanged(event: any) {
@@ -393,7 +575,6 @@ export class PortfolioComponent implements OnInit {
 
   ViewDetailsOffering(e: any) {
     this.getDetails = e;
-    console.log('getDetails', this.getDetails)
     this.router.navigate(['./../portfolio' + '/' + 'offering' + '/' + this.getDetails.id], { relativeTo: this.route });
   }
 
@@ -413,48 +594,85 @@ export class PortfolioComponent implements OnInit {
     this.FundsList = {};
     this.Markers = [];
     this.SummaryListValue = '';
-    this._portfolio.getPortfoliobyOfferingStatus(Id).subscribe(data => {
-      if (data != null) {
-        this.ViewDetailsByStaus = data;
-        this.selectOfferingDetails();
-        this.Loader = false;
-        this.Id = this.ViewDetailsByStaus.id;
-        this.OfferingName = this.ViewDetailsByStaus.name,
-          this.AddInvestmentForm.patchValue({
-            InvestmentOfferingType: this.ViewDetailsByStaus.name,
-          })
-        this.OfferingTypeId = this.ViewDetailsByStaus.type;
-        this.EntityName = this.ViewDetailsByStaus.entityName,
-          this.StatusId = this.ViewDetailsByStaus.status;
-        this.OfferingSize = this.ViewDetailsByStaus.size;
-        this.MinimumInvestment = this.ViewDetailsByStaus.minimumInvestment;
-        this.VisibilityId = this.ViewDetailsByStaus.visibility;
-        this.GalleryList = this.ViewDetailsByStaus.galleries;
-        console.log('GalleryList', this.GalleryList);
-        this.SummaryList = this.ViewDetailsByStaus.summary;
-        if (this.SummaryList.length > 0) {
-          this.SummaryListValue = this.ViewDetailsByStaus.summary[0].summary;
+    this._portfolio.GetOfferingVisibilityList().subscribe(data => {
+      this.OfferingVisibilityList = data;
+
+      this._portfolio.getPortfoliobyOfferingStatus(Id).subscribe(data => {
+        if (data != null) {
+          this.ViewDetailsByStaus = data;
+          this.selectOfferingDetails();
+          this.Loader = false;
+          this.Id = this.ViewDetailsByStaus.id;
+          this.OfferingName = this.ViewDetailsByStaus.name,
+            this.AddInvestmentForm.patchValue({
+              InvestmentOfferingType: this.ViewDetailsByStaus.name,
+            })
+          this.OfferingTypeId = this.ViewDetailsByStaus.type;
+          this.EntityName = this.ViewDetailsByStaus.entityName,
+            this.StatusId = this.ViewDetailsByStaus.status;
+          this.OfferingSize = this.ViewDetailsByStaus.size;
+          this.MinimumInvestment = this.ViewDetailsByStaus.minimumInvestment;
+          this.VisibilityId = this.ViewDetailsByStaus.visibility;
+          this.statusLink = this.ViewDetailsByStaus.isPrivate;
+          this.showRaised = this.ViewDetailsByStaus.showPercentageRaised;
+          this.IsDocumentPrivate = this.ViewDetailsByStaus.isDocumentPrivate;
+          this.EditOfferingVisibilityList = [];
+          this.EditOfferingVisibilityList = this.ViewDetailsByStaus.portfolioVisibility;
+          for (let i = 0; i < this.EditOfferingVisibilityList.length; i++) {
+            if (this.EditOfferingVisibilityList[i].offeringVisibiltyId != null) {
+              let OID = this.EditOfferingVisibilityList[i].offeringVisibiltyId
+              let OFName = this.OfferingVisibilityList.filter((x: { offeringVisibiltyId: any; }) => x.offeringVisibiltyId == OID)
+              this.OVisibilityList.push({
+                id: "visibility_" + this.EditOfferingVisibilityList[i].offeringVisibiltyId,
+                name: OFName[0].name,
+              })
+            }
+            if (this.EditOfferingVisibilityList[i].offeringGroupId != null) {
+              let OGID = this.EditOfferingVisibilityList[i].offeringGroupId
+              let OGName = this.OfferingVisibilityList.filter((x: { offeringGroupId: any; }) => x.offeringGroupId == OGID)
+              this.OVisibilityList.push({
+                id: "offering_" + this.EditOfferingVisibilityList[i].offeringGroupId,
+                name: OGName[0].name,
+              })
+            }
+            if (this.EditOfferingVisibilityList[i].tagId != null) {
+              let OTId = this.EditOfferingVisibilityList[i].tagId
+              let OTName = this.OfferingVisibilityList.filter((x: { tagId: any; }) => x.tagId == OTId)
+              this.OVisibilityList.push({
+                id: "tag_" + this.EditOfferingVisibilityList[i].tagId,
+                name: OTName[0].name,
+              })
+            }
+          }
+
+          let enURL = window.location.href;
+          var splitUrl = enURL.split('/');
+          this.LinkToOffering = 'http://localhost:4200/portfolio/offering-details/' + btoa(splitUrl[5]);
+          this.GalleryList = this.ViewDetailsByStaus.galleries;
+          this.SummaryList = this.ViewDetailsByStaus.summary;
+          if (this.SummaryList.length > 0) {
+            this.SummaryListValue = this.ViewDetailsByStaus.summary[0].summary;
+          }
+          this.DocumentList = this.ViewDetailsByStaus.documents;
+          this.LocationList = this.ViewDetailsByStaus.locations;
+          this.keyHignlightList = this.ViewDetailsByStaus.keyHighlights;
+          this.FundsList = this.ViewDetailsByStaus.funds;
+          if (this.FundsList != null) {
+            this.getFundsDetails();
+          }
+          this.Markers.push({
+            position: {
+              lat: this.LocationList[0].latitude,
+              lng: this.LocationList[0].longitude
+            },
+          });
         }
-        this.DocumentList = this.ViewDetailsByStaus.documents;
-        console.log('DocumentList', this.DocumentList);
-        this.LocationList = this.ViewDetailsByStaus.locations;
-        this.keyHignlightList = this.ViewDetailsByStaus.keyHighlights;
-        console.log('keyHignlightList', this.keyHignlightList);
-        this.FundsList = this.ViewDetailsByStaus.funds;
-        if (this.FundsList != null) {
-          this.getFundsDetails();
+        else {
+          this.Loader = false;
         }
-        this.Markers.push({
-          position: {
-            lat: this.LocationList[0].latitude,
-            lng: this.LocationList[0].longitude
-          },
-        });
-      }
-      else {
-        this.Loader = false;
-      }
+      })
     })
+
   }
 
   getFundsDetails() {
@@ -463,8 +681,7 @@ export class PortfolioComponent implements OnInit {
     this.FundBankAddress = this.FundsList.bankAddress;
     this.FundRoutingNumber = this.FundsList.routingNumber;
     this.FundAccountNumber = this.FundsList.accountNumber;
-    this.FundAccountType = this.FundsList.accountType;
-    console.log('FundAccountType', this.FundAccountType)
+    this.FundAccountType = this.FundsList.accountType.toString();
     this.FundBeneficiaryAccountName = this.FundsList.beneficiary;
     this.FundBeneficiaryAddress = this.FundsList.beneficiaryAddress;
     this.FundReference = this.FundsList.reference;
@@ -474,6 +691,25 @@ export class PortfolioComponent implements OnInit {
     this.FundMailMemo = this.FundsList.memo;
     this.FundMailOtherInstructions = this.FundsList.checkOtherInstructions;
     this.customMailValue = this.FundsList.custom;
+    if (this.FundsList.fundingType == 1) {
+      this.wireTransfer = true;
+      this.WireTransferShow = true;
+      this.byCheck = false;
+      this.byCheckShow = false;
+    }
+    else if (this.FundsList.fundingType == 2) {
+      this.byCheck = true;
+      this.byCheckShow = true;
+      this.wireTransfer = false;
+      this.WireTransferShow = false;
+    }
+    else if (this.FundsList.fundingType == 3) {
+      this.wireTransfer = true;
+      this.WireTransferShow = true;
+      this.byCheck = true;
+      this.byCheckShow = true;
+    }
+
   }
 
   getReservationByStatus(Id: any) {
@@ -487,39 +723,87 @@ export class PortfolioComponent implements OnInit {
     this.FundsList = [];
     this.Markers = [];
     this.SummaryListValue = '';
-    this._portfolio.getPortfoliobyReservationStatus(Id).subscribe(data => {
-      this.ViewDetailsByStaus = data;
-      this.selectReservationDetails();
-      this.Loader = false;
-      this.Id = this.ViewDetailsByStaus.id;
-      this.ReservationName = this.ViewDetailsByStaus.name,
-        this.AddNewReservationForm.patchValue({
-          NewReservationName: this.ViewDetailsByStaus.name,
-        })
-      this.EntityName = this.ViewDetailsByStaus.entityName,
-        this.StatusId = this.ViewDetailsByStaus.status;
-      this.ReservationSize = this.ViewDetailsByStaus.size;
-      this.VisibilityId = this.ViewDetailsByStaus.visibility;
-      this.GalleryList = this.ViewDetailsByStaus.galleries;
-      this.SummaryList = this.ViewDetailsByStaus.summary;
-      if (this.SummaryList.length > 0) {
-        this.SummaryListValue = this.ViewDetailsByStaus.summary[0].summary;
-      }
-      this.DocumentList = this.ViewDetailsByStaus.documents;
-      this.LocationList = this.ViewDetailsByStaus.locations;
-      this.keyHignlightList = this.ViewDetailsByStaus.keyHighlights;
-      this.FundsList = this.ViewDetailsByStaus.funds;
-      this.Markers.push({
-        position: {
-          lat: this.LocationList[0].latitude,
-          lng: this.LocationList[0].longitude
-        },
-      });
+    this._portfolio.GetReservationVisibilityList().subscribe(data => {
+      this.ReservationVisibilityList = data;
+      this._portfolio.getPortfoliobyReservationStatus(Id).subscribe(data => {
+        this.ViewDetailsByStaus = data;
+        this.selectReservationDetails();
+        this.Loader = false;
+        this.Id = this.ViewDetailsByStaus.id;
+        this.ReservationName = this.ViewDetailsByStaus.name,
+          // this.AddNewReservationForm.patchValue({
+          //   NewReservationName: this.ViewDetailsByStaus.name,
+          // })
+          this.EntityName = this.ViewDetailsByStaus.entityName,
+          this.StatusId = this.ViewDetailsByStaus.status;
+        this.ReservationSize = this.ViewDetailsByStaus.size;
+        this.VisibilityId = this.ViewDetailsByStaus.visibility;
+
+        this.EditReservationVisibilityList = [];
+        this.EditReservationVisibilityList = this.ViewDetailsByStaus.portfolioVisibility;
+        for (let i = 0; i < this.EditReservationVisibilityList.length; i++) {
+          if (this.EditReservationVisibilityList[i].offeringVisibiltyId != null) {
+            let OID = this.EditReservationVisibilityList[i].offeringVisibiltyId
+            let OFName = this.ReservationVisibilityList.filter((x: { offeringVisibiltyId: any; }) => x.offeringVisibiltyId == OID)
+            this.RVisibilityList.push({
+              id: "visibility_" + this.EditReservationVisibilityList[i].offeringVisibiltyId,
+              name: OFName[0].name,
+            })
+          }
+          if (this.EditReservationVisibilityList[i].offeringGroupId != null) {
+            let OGID = this.EditReservationVisibilityList[i].offeringGroupId
+            let OGName = this.ReservationVisibilityList.filter((x: { offeringGroupId: any; }) => x.offeringGroupId == OGID)
+            this.RVisibilityList.push({
+              id: "offering_" + this.EditReservationVisibilityList[i].offeringGroupId,
+              name: OGName[0].name,
+            })
+          }
+          if (this.EditReservationVisibilityList[i].tagId != null) {
+            let OTId = this.EditReservationVisibilityList[i].tagId
+            let OTName = this.ReservationVisibilityList.filter((x: { tagId: any; }) => x.tagId == OTId)
+            this.RVisibilityList.push({
+              id: "tag_" + this.EditReservationVisibilityList[i].tagId,
+              name: OTName[0].name,
+            })
+          }
+        }
+
+        this.statusLink = this.ViewDetailsByStaus.isPrivate;
+        let enURL = window.location.href;
+        var splitUrl = enURL.split('/');
+        this.LinkToOffering = 'http://localhost:4200/portfolio/reservation-details/' + btoa(splitUrl[5]);
+        this.GalleryList = this.ViewDetailsByStaus.galleries;
+        this.SummaryList = this.ViewDetailsByStaus.summary;
+        if (this.SummaryList.length > 0) {
+          this.SummaryListValue = this.ViewDetailsByStaus.summary[0].summary;
+        }
+        this.DocumentList = this.ViewDetailsByStaus.documents;
+        this.LocationList = this.ViewDetailsByStaus.locations;
+        this.keyHignlightList = this.ViewDetailsByStaus.keyHighlights;
+        this.FundsList = this.ViewDetailsByStaus.funds;
+        if (this.LocationList.length > 0) {
+          this.Markers.push({
+            position: {
+              lat: this.LocationList[0].latitude,
+              lng: this.LocationList[0].longitude
+            },
+          });
+        }
+      })
     })
   }
   ShowPortfolioList() {
-    localStorage.setItem('RouteName', 'offering');
-    this.router.navigateByUrl('/portfolio');
+    // localStorage.setItem('RouteName', 'offering');
+    let x = localStorage.getItem("RouteName1");
+    if (x == "AdminDashboard") {
+      this.router.navigate(['./../../../admin-dashboard'], { relativeTo: this.route });
+    }
+    else {
+      this.router.navigateByUrl('/portfolio');
+    }
+    localStorage.removeItem("InvestorId");
+    localStorage.removeItem("RouteName");
+    localStorage.removeItem("RouteName1");
   }
 
   ShowPortfolioListReservation() {
@@ -540,7 +824,7 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.GetPortfolioOfferings().subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('PortfolioList', data);
+        console.log('PortfolioList', this.PortfolioList)
         this.Loader = false;
       }
       else {
@@ -567,6 +851,7 @@ export class PortfolioComponent implements OnInit {
     this.OfferingTypeId = 0;
     this.StatusId = 0;
     this.VisibilityId = 0;
+    this.OVisibilityList = [];
   }
 
   onOfferingName() {
@@ -597,7 +882,7 @@ export class PortfolioComponent implements OnInit {
   onchangeVisibility(e: any) {
     this.AddOfferingForm.get('Visibility').setValue(e.target.value);
     this.AddOfferingForm.value.Visibility = e.target.value;
-    this.VisibilityId = +e.target.value;
+    this.VisibilityId = e.target.value;
     if (this.VisibilityId == 0) {
       this.VisibilityError = true;
     }
@@ -653,16 +938,25 @@ export class PortfolioComponent implements OnInit {
       this.OfferingStatusError = true;
       this.Loader = false;
     }
-    if (this.AddOfferingForm.value.Visibility == 0) {
-      this.VisibilityError = true;
-      this.Loader = false;
-    }
-    else if (this.AddOfferingForm.invalid) {
+    // if (this.AddOfferingForm.value.Visibility == 0) {
+    if (this.OVisibilityList.length == 0 || this.AddOfferingForm.value.Status == 0 || this.AddOfferingForm.invalid) {
+      if (this.AddOfferingForm.value.Status == 0) {
+        this.OfferingStatusError = true;
+      }
+      else {
+        this.OfferingStatusError = false;
+      }
+      if (this.OVisibilityList.length == 0) {
+        this.VisibilityError = true;
+      }
+      else {
+        this.VisibilityError = false;
+      }
       this.Loader = false;
       return
     }
     else if (this.OfferingNameError == true || this.OfferingStatusError == true || this.OfferingSizeZeroError == true
-      || this.OfferingSizeError == true || this.VisibilityError == true || this.MinimumInvestmentZeroError == true || this.MinimumInvestmentError == true) {
+      || this.OfferingSizeError == true || this.VisibilityError == true || this.NoAllVisibilityError == true || this.MinimumInvestmentZeroError == true || this.MinimumInvestmentError == true) {
       this.Loader = false;
       return
     }
@@ -674,10 +968,69 @@ export class PortfolioComponent implements OnInit {
       portfolioOfferingModel.Status = +this.StatusId;
       portfolioOfferingModel.Size = +this.AddOfferingForm.value.OfferingSize;
       portfolioOfferingModel.MinimumInvestment = +this.AddOfferingForm.value.MinimumInvestment;
-      portfolioOfferingModel.Visibility = +this.VisibilityId;
+      // portfolioOfferingModel.Visibility = +this.VisibilityId;
+      this.VList = [];
+      for (let i = 0; i < this.OVisibilityList.length; i++) {
+        var temp = this.OVisibilityList[i].id
+        var temp1 = temp.split('_');
+        if (temp1[0] == "visibility") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { offeringVisibiltyId: number; }) => x.offeringVisibiltyId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: +temp1[1],
+            OfferingGroupId: null,
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "offering") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { offeringGroupId: number; }) => x.offeringGroupId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: +temp1[1],
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "tag") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { tagId: number; }) => x.tagId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: null,
+            TagId: +temp1[1],
+            Active: true
+          })
+        }
+      }
+      portfolioOfferingModel.PortfolioVisibility = this.VList;
       if (this.UbdatebtnShow == false) {
         this._portfolio.SavePortfolioOffering(portfolioOfferingModel).subscribe(data => {
-          console.log('SavePortfolioOffering', data)
           if (data) {
             this.toastr.success("Offering added successfully", "Success");
             this.addOfferingShow = false;
@@ -697,12 +1050,12 @@ export class PortfolioComponent implements OnInit {
       else {
         portfolioOfferingModel.Id = this.OfferingId;
         this._portfolio.UpdatePortfolioOffering(portfolioOfferingModel).subscribe(data => {
-          console.log('UpdatePortfolioOffering', data)
           if (data) {
             this.toastr.success("Offering updated successfully", "Success");
             this.addOfferingShow = false;
             this.AddOfferingForm.reset();
             this.OfferingTypeId = 0;
+            this.OVisibilityList = [];
             this.StatusId = 0;
             this.VisibilityId = 0;
             this.getOfferings();
@@ -719,16 +1072,24 @@ export class PortfolioComponent implements OnInit {
 
   SaveOfferingDetails(id: any) {
     this.Loader = true;
-    if (this.StatusId == 0) {
-      this.OfferingStatusError = true;
+    if (this.StatusId == 0 || this.OVisibilityList.length == 0) {
+      if (this.StatusId == 0) {
+        this.OfferingStatusError = true;
+      }
+      else {
+        this.OfferingStatusError = false;
+      }
+      if (this.OVisibilityList.length == 0) {
+        this.VisibilityError = true;
+      }
+      else {
+        this.VisibilityError = false;
+      }
       this.Loader = false;
-    }
-    if (this.VisibilityId == 0) {
-      this.VisibilityError = true;
-      this.Loader = false;
+      return;
     }
     else if (this.OfferingNameError == true || this.OfferingStatusError == true || this.OfferingSizeZeroError == true
-      || this.OfferingSizeError == true || this.VisibilityError == true || this.MinimumInvestmentZeroError == true || this.MinimumInvestmentError == true) {
+      || this.OfferingSizeError == true || this.VisibilityError == true || this.NoAllVisibilityError == true || this.MinimumInvestmentZeroError == true || this.MinimumInvestmentError == true) {
       this.Loader = false;
       return
     }
@@ -742,8 +1103,67 @@ export class PortfolioComponent implements OnInit {
       portfolioOfferingModel.MinimumInvestment = +this.MinimumInvestment;
       portfolioOfferingModel.Visibility = +this.VisibilityId;
       portfolioOfferingModel.Id = id;
+      this.VList = [];
+      for (let i = 0; i < this.OVisibilityList.length; i++) {
+        var temp = this.OVisibilityList[i].id
+        var temp1 = temp.split('_');
+        if (temp1[0] == "visibility") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { offeringVisibiltyId: number; }) => x.offeringVisibiltyId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: +temp1[1],
+            OfferingGroupId: null,
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "offering") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { offeringGroupId: number; }) => x.offeringGroupId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: +temp1[1],
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "tag") {
+          if (this.EditOfferingVisibilityList.length > 0) {
+            var x = this.EditOfferingVisibilityList.filter((x: { tagId: number; }) => x.tagId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: null,
+            TagId: +temp1[1],
+            Active: true
+          })
+        }
+      }
+      portfolioOfferingModel.PortfolioVisibility = this.VList;
       this._portfolio.UpdatePortfolioOffering(portfolioOfferingModel).subscribe(data => {
-        console.log('UpdatePortfolioOffering', data)
         if (data) {
           this.Loader = false;
           this.toastr.success("Offering updated successfully", "Success");
@@ -754,6 +1174,75 @@ export class PortfolioComponent implements OnInit {
         }
       })
     }
+  }
+
+  copyInputMessage(inputElement: any) {
+    inputElement.select();
+    document.execCommand('copy');
+    inputElement.setSelectionRange(0, 0);
+    this.textMessageFunc('URL');
+
+  }
+
+  textMessageFunc(msgText: any) {
+    let textMessage = msgText + " Copied to Clipboard";
+    this.toastr.success(textMessage);
+  }
+
+  landingPage(e: any, value: any) {
+    if (value == 1) {
+      this.LandingName = 'Offering'
+    }
+    else {
+      this.LandingName = 'Reservation'
+    }
+    if (e.target.checked) {
+      this.LandingId = 1
+      this.landingPageShow = true;
+    } else {
+      this.LandingId = 2
+      this.landingPageShow = true;
+    }
+    e.preventDefault();
+  }
+
+  showConfirm() {
+    this.statusLink = !this.statusLink;
+    let landingPage: any = {};
+    landingPage.AdminUserId = Number(localStorage.getItem('UserId'));
+    if (this.LandingName == 'Offering') {
+      landingPage.OfferingId = this.offeringId;
+    }
+    else {
+      landingPage.OfferingId = this.reservationId;
+    }
+    landingPage.IsPrivate = this.LandingId == 1 ? true : false;
+    landingPage.ShowPercentageRaised = this.showRaised != null ? this.showRaised : false;
+    this._portfolio.saveLandingPage(landingPage).subscribe(data => {
+      let a: any = {};
+      a = data;
+      this.statusLink = a.portfolioOffering.isPrivate;
+      this.landingPageShow = false;
+    })
+  }
+
+  ShowRaised(e: any) {
+    if (e.target.checked) {
+      this.RaisedId = 1
+    }
+    else {
+      this.RaisedId = 2
+    }
+    let RaisedPage: any = {};
+    RaisedPage.AdminUserId = Number(localStorage.getItem('UserId'));
+    RaisedPage.OfferingId = this.offeringId;
+    RaisedPage.ShowPercentageRaised = this.RaisedId == 1 ? true : false;
+    RaisedPage.IsPrivate = this.statusLink != null ? this.statusLink : false;
+    this._portfolio.saveLandingPage(RaisedPage).subscribe(data => {
+      let a: any = {};
+      a = data;
+      this.showRaised = a.portfolioOffering.showPercentageRaised;
+    })
   }
 
   addOfferingCancel() {
@@ -792,6 +1281,34 @@ export class PortfolioComponent implements OnInit {
     this.StatusId = this.EditOfferingData.status;
     this.OfferingTypeId = this.EditOfferingData.type;
     this.VisibilityId = this.EditOfferingData.visibility;
+    this.EditOfferingVisibilityList = [];
+    this.EditOfferingVisibilityList = val.portfolioVisibility;
+    for (let i = 0; i < this.EditOfferingVisibilityList.length; i++) {
+      if (this.EditOfferingVisibilityList[i].offeringVisibiltyId != null) {
+        let OID = this.EditOfferingVisibilityList[i].offeringVisibiltyId
+        let OFName = this.OfferingVisibilityList.filter((x: { offeringVisibiltyId: any; }) => x.offeringVisibiltyId == OID)
+        this.OVisibilityList.push({
+          id: "visibility_" + this.EditOfferingVisibilityList[i].offeringVisibiltyId,
+          name: OFName[0].name,
+        })
+      }
+      if (this.EditOfferingVisibilityList[i].offeringGroupId != null) {
+        let OGID = this.EditOfferingVisibilityList[i].offeringGroupId
+        let OGName = this.OfferingVisibilityList.filter((x: { offeringGroupId: any; }) => x.offeringGroupId == OGID)
+        this.OVisibilityList.push({
+          id: "offering_" + this.EditOfferingVisibilityList[i].offeringGroupId,
+          name: OGName[0].name,
+        })
+      }
+      if (this.EditOfferingVisibilityList[i].tagId != null) {
+        let OTId = this.EditOfferingVisibilityList[i].tagId
+        let OTName = this.OfferingVisibilityList.filter((x: { tagId: any; }) => x.tagId == OTId)
+        this.OVisibilityList.push({
+          id: "tag_" + this.EditOfferingVisibilityList[i].tagId,
+          name: OTName[0].name,
+        })
+      }
+    }
   }
 
   DeleteOffering(val: any) {
@@ -829,6 +1346,8 @@ export class PortfolioComponent implements OnInit {
         }
       })
     }
+    else if (this.tabSelectId == 3) {
+    }
   }
 
   // Reservation
@@ -847,7 +1366,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.GetPortfolioReservation().subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('ReservationsList', this.PortfolioList)
         this.Loader = false;
       }
       else {
@@ -872,6 +1390,7 @@ export class PortfolioComponent implements OnInit {
     this.ReservationSizeZeroError = false;
     this.VisibilityError = false;
     this.ReservationSizeError = false;
+    this.RVisibilityList = [];
   }
 
   addReservationCancel() {
@@ -889,6 +1408,15 @@ export class PortfolioComponent implements OnInit {
 
   onReservationName() {
     if (this.AddReservationForm.value.ReservationName == '' || this.AddReservationForm.value.ReservationName == null) {
+      this.ReservationNameError = true;
+    }
+    else {
+      this.ReservationNameError = false;
+    }
+  }
+
+  onReservationName1() {
+    if (this.ReservationName == '' || this.ReservationName == null) {
       this.ReservationNameError = true;
     }
     else {
@@ -928,15 +1456,17 @@ export class PortfolioComponent implements OnInit {
   onSubmitReservationForm() {
     this.Loader = true;
     this.submitted = true;
-    if (this.AddReservationForm.value.Visibility == 0) {
-      this.VisibilityError = true;
-      this.Loader = false;
-    }
-    if (this.AddReservationForm.invalid) {
+    if (this.RVisibilityList.length == 0 || this.AddReservationForm.invalid) {
+      if (this.RVisibilityList.length == 0) {
+        this.VisibilityError = true;
+      }
+      else {
+        this.VisibilityError = false;
+      }
       this.Loader = false;
       return
     }
-    else if (this.ReservationNameError == true || this.ReservationSizeZeroError == true || this.VisibilityError == true || this.ReservationSizeError == true) {
+    else if (this.ReservationNameError == true || this.NoAllVisibilityError == true || this.ReservationSizeZeroError == true || this.VisibilityError == true || this.ReservationSizeError == true) {
       this.Loader = false;
       return
     }
@@ -946,10 +1476,69 @@ export class PortfolioComponent implements OnInit {
       portfolioReservationModel.EntityName = this.AddReservationForm.value.EntityName;
       portfolioReservationModel.Status = +this.StatusId;
       portfolioReservationModel.Visibility = +this.VisibilityId;
-      portfolioReservationModel.ReservationSize = +this.AddReservationForm.value.ReservationSize;
+      portfolioReservationModel.Size = +this.AddReservationForm.value.ReservationSize;
+      this.VList = [];
+      for (let i = 0; i < this.RVisibilityList.length; i++) {
+        var temp = this.RVisibilityList[i].id
+        var temp1 = temp.split('_');
+        if (temp1[0] == "visibility") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { offeringVisibiltyId: number; }) => x.offeringVisibiltyId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: +temp1[1],
+            OfferingGroupId: null,
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "offering") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { offeringGroupId: number; }) => x.offeringGroupId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: +temp1[1],
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "tag") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { tagId: number; }) => x.tagId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: null,
+            TagId: +temp1[1],
+            Active: true
+          })
+        }
+      }
+      portfolioReservationModel.PortfolioVisibility = this.VList;
       if (this.UbdatebtnShow == false) {
         this._portfolio.SavePortfolioReservation(portfolioReservationModel).subscribe(data => {
-          console.log('portfolioReservationModel', data)
           if (data) {
             this.toastr.success("Reservation added successfully", "Success");
             this.addReservationShow = false;
@@ -968,7 +1557,6 @@ export class PortfolioComponent implements OnInit {
       else {
         portfolioReservationModel.Id = this.ReservationId;
         this._portfolio.UpdatePortfolioOffering(portfolioReservationModel).subscribe(data => {
-          console.log('UpdatePortfolioOffering', data)
           if (data) {
             this.toastr.success("Reservation updated successfully", "Success");
             this.addReservationShow = false;
@@ -987,13 +1575,40 @@ export class PortfolioComponent implements OnInit {
     }
   }
 
+  CovertOffering(e: any) {
+    if (e.target.checked) {
+      this.LandingId = 1
+      this.ConvertPageShow = true;
+    } else {
+      this.LandingId = 2
+      this.ConvertPageShow = true;
+    }
+    e.preventDefault();
+  }
+
+  ConvertToOffering() {
+    this.Loader = true;
+    let AdminUserId = Number(localStorage.getItem('UserId'));
+    let ReservatioId = this.reservationId;
+    this._portfolio.saveConvertToOffering(ReservatioId, AdminUserId).subscribe(data => {
+      let a: any = {};
+      a = data;
+      this.ConvertPageShow = false;
+      this.Selected = 'Offerings';
+      this.router.navigateByUrl('/portfolio' + '/' + 'offering' + '/' + a.portfolioOffering.id);
+      setTimeout(() => {
+        this.ngOnInit();
+      }, 5000);
+    })
+  }
+
   SaveReservationDetails(id: any) {
     this.Loader = true;
-    if (this.VisibilityId == 0) {
+    if (this.RVisibilityList.length == 0) {
       this.VisibilityError = true;
       this.Loader = false;
     }
-    else if (this.ReservationNameError == true || this.ReservationSizeZeroError == true || this.VisibilityError == true || this.ReservationSizeError == true) {
+    else if (this.ReservationNameError == true || this.ReservationSizeZeroError == true || this.VisibilityError == true || this.NoAllVisibilityError == true || this.ReservationSizeError == true) {
       this.Loader = false;
       return
     }
@@ -1003,10 +1618,69 @@ export class PortfolioComponent implements OnInit {
       portfolioReservationModel.EntityName = this.EntityName;
       portfolioReservationModel.Status = +this.StatusId;
       portfolioReservationModel.Visibility = +this.VisibilityId;
-      portfolioReservationModel.ReservationSize = +this.ReservationSize;
+      portfolioReservationModel.Size = +this.ReservationSize;
+      this.VList = [];
+      for (let i = 0; i < this.RVisibilityList.length; i++) {
+        var temp = this.RVisibilityList[i].id
+        var temp1 = temp.split('_');
+        if (temp1[0] == "visibility") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { offeringVisibiltyId: number; }) => x.offeringVisibiltyId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: +temp1[1],
+            OfferingGroupId: null,
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "offering") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { offeringGroupId: number; }) => x.offeringGroupId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: +temp1[1],
+            TagId: null,
+            Active: true
+          })
+        }
+        else if (temp1[0] == "tag") {
+          if (this.EditReservationVisibilityList.length > 0) {
+            var x = this.EditReservationVisibilityList.filter((x: { tagId: number; }) => x.tagId == +temp1[1])
+            if (x.length > 0) {
+              this.EditId = x[0].id
+            }
+            else {
+              this.EditId = 0
+            }
+          }
+          this.VList.push({
+            Id: this.EditId != 0 ? this.EditId : 0,
+            OfferingVisibiltyId: null,
+            OfferingGroupId: null,
+            TagId: +temp1[1],
+            Active: true
+          })
+        }
+      }
+      portfolioReservationModel.PortfolioVisibility = this.VList;
       portfolioReservationModel.Id = id;
       this._portfolio.UpdatePortfolioOffering(portfolioReservationModel).subscribe(data => {
-        console.log('UpdatePortfolioOffering', data)
         if (data) {
           this.Loader = false;
           this.toastr.success("Reservation updated successfully", "Success");
@@ -1035,9 +1709,44 @@ export class PortfolioComponent implements OnInit {
     })
     this.StatusId = this.EditReservationData.status;
     this.VisibilityId = this.EditReservationData.visibility;
+    this.EditReservationVisibilityList = [];
+    this.EditReservationVisibilityList = val.portfolioVisibility;
+    for (let i = 0; i < this.EditReservationVisibilityList.length; i++) {
+      if (this.EditReservationVisibilityList[i].offeringVisibiltyId != null) {
+        let OID = this.EditReservationVisibilityList[i].offeringVisibiltyId
+        let OFName = this.ReservationVisibilityList.filter((x: { offeringVisibiltyId: any; }) => x.offeringVisibiltyId == OID)
+        this.RVisibilityList.push({
+          id: "visibility_" + this.EditReservationVisibilityList[i].offeringVisibiltyId,
+          name: OFName[0].name,
+        })
+      }
+      if (this.EditReservationVisibilityList[i].offeringGroupId != null) {
+        let OGID = this.EditReservationVisibilityList[i].offeringGroupId
+        let OGName = this.ReservationVisibilityList.filter((x: { offeringGroupId: any; }) => x.offeringGroupId == OGID)
+        this.RVisibilityList.push({
+          id: "offering_" + this.EditReservationVisibilityList[i].offeringGroupId,
+          name: OGName[0].name,
+        })
+      }
+      if (this.EditReservationVisibilityList[i].tagId != null) {
+        let OTId = this.EditReservationVisibilityList[i].tagId
+        let OTName = this.ReservationVisibilityList.filter((x: { tagId: any; }) => x.tagId == OTId)
+        this.RVisibilityList.push({
+          id: "tag_" + this.EditReservationVisibilityList[i].tagId,
+          name: OTName[0].name,
+        })
+      }
+    }
   }
 
   DeleteReservation(val: any) {
+    this.ReservationData = '';
+    this.DeleteConfirmationPopup = true;
+    this.ReservationData = val;
+  }
+
+  DeleteArchives(val: any) {
+    this.tabSelectId = 3;
     this.ReservationData = '';
     this.DeleteConfirmationPopup = true;
     this.ReservationData = val;
@@ -1057,7 +1766,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getportfolioArchives().subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('getArchives', this.PortfolioList)
         this.Loader = false;
       }
       else {
@@ -1101,8 +1809,14 @@ export class PortfolioComponent implements OnInit {
     this.SubscriptionsShow = false;
     this.OfferingReservationTabShow = false;
     this.OfferingDistributionShow = false;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
     this.getInvestorListSummary();
     this.getInvestorList();
+  }
+
+  receiveMessage2(e: any) {
+    this.selectInvestors();
   }
 
   selectOfferingDetails() {
@@ -1112,12 +1826,21 @@ export class PortfolioComponent implements OnInit {
     this.OfferingDistributionShow = false;
     this.OfferingReservationTabShow = false;
     this.InvestorTabShow = false;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
+    this.EsignTabShow = false;
   }
 
   selecteSignTemplates() {
-    this.Selected = 'eSignTemplates'
+    this.Selected = 'eSignTemplates';
+    this.EsignTabShow = true;
     this.OfferingDetailsShow = false;
     this.SubscriptionsShow = false;
+    this.OfferingDistributionShow = false;
+    this.OfferingReservationTabShow = false;
+    this.InvestorTabShow = false;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
   }
 
   selectSubscriptions() {
@@ -1127,13 +1850,24 @@ export class PortfolioComponent implements OnInit {
     this.OfferingDetailsShow = false;
     this.OfferingDistributionShow = false;
     this.OfferingReservationTabShow = false;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
+    this.EsignTabShow = false;
     this.getSubscriptionsList();
   }
 
   selectAccreditations() {
+    this.AccreditationsShow = true;
     this.OfferingDetailsShow = false;
-    this.Selected = 'Accreditations'
     this.SubscriptionsShow = false;
+    this.InvestorTabShow = false;
+    this.OfferingDistributionShow = false;
+    this.OfferingReservationTabShow = false;
+    this.UpdateTabShow = false;
+    this.EsignTabShow = false;
+    this.Selected = 'Accreditations'
+    this.PortfolioList = [];
+    this.getAccreditations();
   }
 
   selectOfferingreservations() {
@@ -1143,6 +1877,9 @@ export class PortfolioComponent implements OnInit {
     this.InvestorTabShow = false;
     this.OfferingDistributionShow = false;
     this.OfferingReservationTabShow = true;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
+    this.EsignTabShow = false;
     this.getOfferingReservationSummary();
     this.getofferingReservationList();
   }
@@ -1160,6 +1897,9 @@ export class PortfolioComponent implements OnInit {
     this.OfferingDistributionShow = true;
     this.OfferingReservationTabShow = false;
     this.InvestorTabShow = false;
+    this.AccreditationsShow = false;
+    this.UpdateTabShow = false;
+    this.EsignTabShow = false;
     this.SelectedDistribution = 'CapTable';
     this.getCapTables();
     this.getHistoryType();
@@ -1169,6 +1909,19 @@ export class PortfolioComponent implements OnInit {
     this.OfferingDetailsShow = false;
     this.Selected = 'Updates'
     this.SubscriptionsShow = false;
+    this.UpdateTabShow = true;
+    this.OfferingDistributionShow = false;
+    this.OfferingReservationTabShow = false;
+    this.InvestorTabShow = false;
+    this.EsignTabShow = false;
+    this.AccreditationsShow = false;
+    this.getUpdates();
+  }
+
+  onReady(eventData: any) {
+    eventData.plugins.get('FileRepository').createUploadAdapter = function (loader: any) {
+      return new UploadAdapter(loader);
+    };
   }
 
   OfferingInformation() {
@@ -1207,7 +1960,23 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getInvestor(offeringId).subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('getInvestorList', data)
+        for (var i = 0; i < this.PortfolioList.length; i++) {
+          if (this.PortfolioList[i].status == 1) {
+            this.PortfolioList[i].statusName = 'Approved'
+          }
+          else if (this.PortfolioList[i].status == 2) {
+            this.PortfolioList[i].statusName = 'Pending'
+          }
+          else if (this.PortfolioList[i].status == 3) {
+            this.PortfolioList[i].statusName = 'Declined'
+          }
+          else if (this.PortfolioList[i].status == 4) {
+            this.PortfolioList[i].statusName = 'Waitlisted'
+          }
+          else {
+            this.PortfolioList[i].statusName = 'Ownership Sold'
+          }
+        }
         this.Loader = false;
       }
       else {
@@ -1223,7 +1992,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getInvestorSummary(offeringId).subscribe(data => {
       if (data != null) {
         this.InvestorSummary = data;
-        console.log('getInvestorSummary', data)
         this.Loader = false;
       }
       else {
@@ -1243,8 +2011,8 @@ export class PortfolioComponent implements OnInit {
       if (data != null) {
         this.captablevalues = data;
         this.PortfolioList = this.captablevalues.capTableInvestments;
+        console.log('PortfolioList', this.PortfolioList)
         this.capValueList = this.captablevalues.capTableInvestments;
-        console.log('getCapTable', data)
         this.Loader = false;
       }
       else {
@@ -1253,13 +2021,55 @@ export class PortfolioComponent implements OnInit {
     })
   }
 
+  CapTableExport() {
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.tableInput.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'CapTable.xlsx');
+  }
+
+  OfferingInvestorsExport() {
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.InvestorTableInput.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'Investors.xlsx');
+  }
+
+  OfferingReservationExport() {
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.OfferingReservationTable.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'Reservations.xlsx');
+  }
+
+  OfferingDistributionReviewExport(){
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.OfferingDistributionReview.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'DistributionReviews.xlsx');
+  }
+
+  OfferingHistoryViewExport(){
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.HistoryView.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'HistoryView.xlsx');
+  }
+
+  ReservationListExport(){
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.ReservationTable.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'Reservation.xlsx');
+  }
+
+
   selectDistributionCapTableview() {
     this.SelectedDistribution = 'CapTable';
     this.getCapTables();
   }
 
   editDistribution(value: any) {
-    console.log('editDistribution', value)
     this.distributionShow = true;
     this.OwnershipValue = value.ownershipPercentage;
     this.DistributionId = value.id;
@@ -1297,7 +2107,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.GetDistributionHistory(Id).subscribe(data => {
       if (data) {
         this.PortfolioList = data;
-        console.log('GetDistributionHistory', data)
         this.Loader = false;
       }
       else {
@@ -1339,7 +2148,6 @@ export class PortfolioComponent implements OnInit {
         a = data;
         this.viewHistoryValue = a;
         this.PortfolioList = a.distributions;
-        console.log('viewHistoryValue', a)
         this.Loader = false;
       }
       else {
@@ -1353,8 +2161,14 @@ export class PortfolioComponent implements OnInit {
     this.getHistory();
   }
 
+  ExportasExcelDistribution() {
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(this.HistoryView.nativeElement);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, 'ViewHistory.xlsx');
+  }
+
   editHistory(value: any) {
-    console.log('editHistory', value)
     this.editDistributionHistoryShow = true;
     this.UbdatebtnShow = true;
     this.DistributionList = [];
@@ -1363,8 +2177,8 @@ export class PortfolioComponent implements OnInit {
 
     this.AddHistoryForm.patchValue({
       HistoryStartDate: (new Date(value.startDate)).toISOString().substring(0, 10),
-      HistoryEndDate:(new Date(value.endDate)).toISOString().substring(0, 10), 
-      HistoryPaymentDate: (new Date(value.paymentDate)).toISOString().substring(0, 10), 
+      HistoryEndDate: (new Date(value.endDate)).toISOString().substring(0, 10),
+      HistoryPaymentDate: (new Date(value.paymentDate)).toISOString().substring(0, 10),
       HistoryMemo: value.memo,
     })
     this.HistoryId = value.type;
@@ -1384,7 +2198,6 @@ export class PortfolioComponent implements OnInit {
           'id': 0,
           'name': 'Select Type'
         })
-        console.log('historyTypeList', data)
       }
     })
   }
@@ -1413,7 +2226,6 @@ export class PortfolioComponent implements OnInit {
   }
 
   onHistoryAmount(e: any) {
-    console.log('onHistoryAmount', e)
     if (e.target.value == '' || e.target.value == null) {
       this.HistoryAmountError = true;
     }
@@ -1491,10 +2303,8 @@ export class PortfolioComponent implements OnInit {
       HistoryModel.Memo = this.AddHistoryForm.value.HistoryMemo;
       HistoryModel.CalculationMethod = this.updateHistoryValue.calculationMethod;
       HistoryModel.Distributions = this.DistributionList;
-      console.log('Distributions', this.DistributionList)
       if (this.UbdatebtnShow == false) {
         this._portfolio.SaveNewReservation(HistoryModel).subscribe(data => {
-          console.log('SaveNewReservation', data)
           if (data) {
             this.toastr.success("Reservation added successfully", "Success");
             this.editDistributionHistoryShow = false;
@@ -1514,7 +2324,6 @@ export class PortfolioComponent implements OnInit {
       else {
         HistoryModel.Id = this.updateHistoryValue.id;
         this._portfolio.UpdateHistory(HistoryModel).subscribe(data => {
-          console.log('HistoryModel', data)
           if (data) {
             this.toastr.success("History updated successfully", "Success");
             this.editDistributionHistoryShow = false;
@@ -1537,25 +2346,25 @@ export class PortfolioComponent implements OnInit {
   selectAddDistribution() {
     this.PortfolioList = [];
     this.SelectedDistribution = 'AddDistribution';
+    this.importdistributionShow = false;
     this.getInvestorName();
     this.InvestorTypechange('InitialInvestor', '1')
   }
 
-  getInvestorName(){
+  getInvestorName() {
     this._portfolio.getInvestorNames(this.offeringId).subscribe(data => {
-      if(data){
+      if (data) {
         this.InvestorNameList = data;
         this.InvestorNameList.push({
           'userId': 0,
           'lastName': 'Select User'
         })
-        console.log('InvestorNameList', this.InvestorNameList)
       }
     })
   }
 
   InvestorTypechange(e: any, Id: any) {
-    if(e == 'InitialInvestor') {
+    if (e == 'InitialInvestor') {
       this.AllInvestorShow = true;
       this.SingleInvestorShow = false;
       this.InvestorNameError == false;
@@ -1660,6 +2469,7 @@ export class PortfolioComponent implements OnInit {
   }
 
   CalculateDistribution() {
+    this.PaymentBtnShow = true;
     this.TotalAmount = 0
     if (this.HistoryId == 0) {
       this.HistoryTypeError = true;
@@ -1667,7 +2477,7 @@ export class PortfolioComponent implements OnInit {
     else {
       this.HistoryTypeError = false;
     }
-    if(this.AllInvestorShow == true){
+    if (this.AllInvestorShow == true) {
       if (this.CalculationId == 0) {
         this.CalculationTypeError = true;
       }
@@ -1675,7 +2485,7 @@ export class PortfolioComponent implements OnInit {
         this.CalculationTypeError = false;
       }
     }
-    else{
+    else {
       if (this.InvestorId == 0) {
         this.InvestorNameError = true;
       }
@@ -1713,11 +2523,10 @@ export class PortfolioComponent implements OnInit {
     else {
       this.DistributionAmountError = false;
     }
-    if (this.HistoryTypeError == false && this.CalculationTypeError == false &&  this.InvestorNameError == false&& this.DistributionStartDateError == false && this.DistributionEndDateError == false &&
+    if (this.HistoryTypeError == false && this.CalculationTypeError == false && this.InvestorNameError == false && this.DistributionStartDateError == false && this.DistributionEndDateError == false &&
       this.DistributionPaymentDateError == false && this.DistributionMemoError == false && this.DistributionAmountError == false) {
-      console.log('capValueList', this.capValueList)
       this.CalculateValueList = [];
-      if(this.SingleInvestorShow == true){
+      if (this.SingleInvestorShow == true) {
         this.PortfolioList = [];
         var distributionTypeName;
         if (this.HistoryId == 1) {
@@ -1741,26 +2550,25 @@ export class PortfolioComponent implements OnInit {
         else if (this.HistoryId == 7) {
           distributionTypeName = 'Interest';
         }
-        const Investorname = this.InvestorNameList.filter((x : any ) => x.userId == this.InvestorId);
-        console.log('Investorname', Investorname);
+        const Investorname = this.InvestorNameList.filter((x: any) => x.userId == this.InvestorId);
         this.PortfolioList.push({
-          'EndDate' : new Date(this.DistributioEndDate),
-          'Memo' : this.DistributionMemo,
-          'PaymentAmount' : this.DistributionAmount,
-          'PaymentDate' : new Date(this.DistributionPaymentDate),
-          'StartDate' : new Date(this.DistributionStartDate),
-          'Type' : +this.HistoryId,
-          'distributionAmount' : Number(this.DistributionAmount),
-          'distributionTypeName' : distributionTypeName,
-          'investerName' : Investorname[0].lastName + ' ' + Investorname[0].firstName,
-          'offeringId' : this.offeringId,
-          'profileTypeName' : 'Individual',
-          'fundedPercentage' : '100',
-          'userId' : Number(this.InvestorId),
-          'paymentMethod' : Investorname[0].distributionMethod
+          'EndDate': new Date(this.DistributioEndDate),
+          'Memo': this.DistributionMemo,
+          'PaymentAmount': Number(this.DistributionAmount),
+          'PaymentDate': new Date(this.DistributionPaymentDate),
+          'StartDate': new Date(this.DistributionStartDate),
+          'Type': +this.HistoryId,
+          'distributionAmount': Number(this.DistributionAmount),
+          'distributionTypeName': distributionTypeName,
+          'investerName': Investorname[0].lastName + ' ' + Investorname[0].firstName,
+          'offeringId': this.offeringId,
+          'profileTypeName': 'Individual',
+          'fundedPercentage': '100',
+          'userId': Number(this.InvestorId),
+          'paymentMethod': Investorname[0].distributionMethod
         })
       }
-      else{
+      else {
         for (var i = 0; i < this.capValueList.length; i++) {
           this.capValueList[i].PaymentAmount = Number(((this.DistributionAmount * this.capValueList[i].fundedPercentage) / 100).toFixed(2))
           this.capValueList[i].Type = this.HistoryId;
@@ -1791,28 +2599,25 @@ export class PortfolioComponent implements OnInit {
           this.capValueList[i].Memo = this.DistributionMemo;
           this.capValueList[i].distributionAmount = Number(this.DistributionAmount);
           this.PortfolioList.push(this.capValueList[i]);
-          for (var i = 0; i < this.PortfolioList.length; i++){
-              this.TotalAmount += this.PortfolioList[i].PaymentAmount
-          }
         }
-        console.log('sum', this.TotalAmount)
       }
-      console.log('CalculateValueList', this.PortfolioList)
+      for (var i = 0; i < this.PortfolioList.length; i++) {
+        this.TotalAmount += this.PortfolioList[i].PaymentAmount
+      }
     }
 
   }
 
   editAddDistribution(value: any) {
-    console.log('editAddDistribution', value);
     this.addDistributionId = value.id;
     this.editDistributionHistoryShow = true;
     this.AddHistoryForm.patchValue({
-      HistoryStartDate: (new Date(value.StartDate)).toISOString().substring(0, 10), 
-      HistoryEndDate: (new Date(value.EndDate)).toISOString().substring(0, 10), 
+      HistoryStartDate: (new Date(value.StartDate)).toISOString().substring(0, 10),
+      HistoryEndDate: (new Date(value.EndDate)).toISOString().substring(0, 10),
       HistoryPaymentDate: (new Date(value.PaymentDate)).toISOString().substring(0, 10),
       HistoryMemo: value.Memo,
       DistributionAmount: value.distributionAmount,
-      Amount: value.PaymentAmount
+      Amount: Number(value.PaymentAmount)
     })
     this.HistoryId = value.Type;
   }
@@ -1848,20 +2653,22 @@ export class PortfolioComponent implements OnInit {
         this.PortfolioList[i].Memo = this.AddHistoryForm.value.HistoryMemo;
         this.PortfolioList[i].PaymentAmount = Number(this.AddHistoryForm.value.Amount);
       }
-      console.log('onUpdateDistributionForm', this.PortfolioList)
       this.editDistributionHistoryShow = false;
     }
   }
 
-  SaveDistribution() {
+  SaveDistribution(Id: any) {
     let addDistribution: any = {};
+    if (Id == 2) {
+      addDistribution.IsNotify = true;
+    }
     addDistribution.AdminUserId = Number(localStorage.getItem('UserId'));
     addDistribution.OfferingId = this.offeringId;
     addDistribution.Type = +this.HistoryId;
-    if(this.AllInvestorShow == true){
+    if (this.AllInvestorShow == true) {
       addDistribution.CalculationMethod = +this.CalculationId;
     }
-    else{
+    else {
       addDistribution.InvesterId = +this.InvestorId;
     }
     addDistribution.Amount = +this.DistributionAmount;
@@ -1873,13 +2680,12 @@ export class PortfolioComponent implements OnInit {
     addDistribution.TotalDistributions = Number(this.TotalAmount);
     this._portfolio.addDistribution(addDistribution).subscribe(data => {
       if (data) {
-        console.log('addDistribution', data);
         this.PaymentBtnShow = false;
       }
     })
   }
 
-  ProceedPaymentsDistribution(){
+  ProceedPaymentsDistribution() {
     alert('Payment Process')
   }
 
@@ -1890,16 +2696,22 @@ export class PortfolioComponent implements OnInit {
     this.ShowNewReservationList = true;
     this.getNewReservationSummary();
     this.getNewReservationList();
+    this.UpdateTabView = false;
   }
 
   selectReservationDetails() {
     this.Selected = 'ReservationDetails';
     this.ShowReservationDetailsView = true;
     this.ShowNewReservationList = false;
+    this.UpdateTabView = false;
   }
 
   selectUpdatesview() {
     this.Selected = 'Updates';
+    this.ShowReservationDetailsView = false;
+    this.ShowNewReservationList = false;
+    this.UpdateTabView = true;
+    this.getUpdates();
   }
 
   ReservationInformation() {
@@ -1909,14 +2721,276 @@ export class PortfolioComponent implements OnInit {
   getSubscriptionsList() {
     this.Loader = true;
     this.PortfolioList = [];
-    this._portfolio.getSubscription().subscribe(data => {
+    this.SubDocumentPath = [];
+    let offeringId = this.offeringId;
+    this._portfolio.getSubscription(offeringId).subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('Subscription', this.PortfolioList)
+        for (var i = 0; i < this.PortfolioList.length; i++) {
+          this.SubDocumentPath.push({
+            id: this.PortfolioList[i].id,
+            name: this.PortfolioList[i].fileName,
+            path: this.PortfolioList[i].filePath
+          });
+        }
         this.Loader = false;
       }
       else {
         this.Loader = false;
+      }
+    })
+  }
+
+  MultipleFileZipdownloadAll() {
+    this.createZip(this.SubDocumentPath, 'subscription_document');
+  }
+
+  async createZip(files: any[], zipName: string) {
+    this.Loader = true;
+    const zip = new JSZip();
+    const name = zipName + '.zip';
+    for (let counter = 0; counter < files.length; counter++) {
+      const element = files[counter];
+      const fileData: any = await this.getFile(element);
+      const b: any = new Blob([fileData], { type: '' + fileData.type + '' });
+      zip.file(element.path.substring(element.path.lastIndexOf('/') + 1), b);
+    }
+
+
+    zip.generateAsync({ type: 'blob' }).then((content) => {
+      if (content) {
+        FileSaver.saveAs(content, name);
+      }
+    });
+
+    this.Loader = false;
+  }
+
+  async getFile(url: string) {
+    let d: any = {};
+    d = url
+    const httpOptions = {
+      responseType: 'blob' as 'json'
+    };
+    const res = await this.httpClient.get(d.path, httpOptions).toPromise().catch((err: HttpErrorResponse) => {
+      const error = err.error;
+      return error;
+    });
+    return res;
+  }
+
+  getAccreditations() {
+    this.Loader = true;
+    this.PortfolioList = [];
+    let offeringId = this.offeringId;
+    this._portfolio.getAccreditations(offeringId).subscribe(data => {
+      if (data != null) {
+        this.PortfolioList = data;
+        this.Loader = false;
+      }
+      else {
+        this.Loader = false;
+      }
+    })
+  }
+
+  DeleteSubscriptionandAccreditations(value: any, Id: any) {
+    this.DiffId = Id;
+    this.subDeleteShow = true;
+    this.SubAndAccreditations = value;
+  }
+
+  DeleteConformItems() {
+    this.Loader = true;
+    let UserId = Number(localStorage.getItem('UserId'));
+    this._portfolio.deleteSubsandAccreditations(UserId, this.SubAndAccreditations.id).subscribe(data => {
+      if (data) {
+        this.subDeleteShow = false;
+        if (this.DiffId == 1) {
+          this.getSubscriptionsList();
+        }
+        else {
+          this.getAccreditations();
+        }
+
+      }
+      else {
+        this.Loader = false;
+      }
+    })
+  }
+
+  getUpdates() {
+    this.Ckbool = true;
+    this.Loader = true;
+    this.PortfolioList = [];
+    var Id: any;
+    if ((localStorage.getItem('RouteName') == 'offering')) {
+      Id = this.offeringId
+    } else {
+      Id = this.reservationId;
+    }
+    this._portfolio.getUpdates(Id).subscribe(data => {
+      if (data != null) {
+        this.PortfolioList = data;
+        console.log('getUpdates', data)
+        this.Loader = false;
+      }
+      else {
+        this.Loader = false;
+      }
+    })
+    this.getEmailList();
+  }
+
+  addUpdates() {
+    this.addUpdateShow = true;
+    this.ModalName = 'Add';
+    this.UpdateDate = null,
+      this.UpdateSubject = '';
+    this.UpdateFromName = '';
+    this.UpdateFromEmail = 0;
+    this.UpdateReplyTo = '';
+    this.UpdateValue = '';
+    this.updateId = 0;
+  }
+
+  UpdateDatechange() {
+    if (this.UpdateDate == '' || this.UpdateDate == null) {
+      this.UpdateDateError = true;
+    }
+    else {
+      this.UpdateDateError = false;
+    }
+  }
+
+  getEmailList() {
+    this._portfolio.getfromemail().subscribe(data => {
+      if (data) {
+        this.EmailList = data;
+        this.EmailList.push({
+          'id': 0,
+          'emailId': 'Select Email'
+        })
+      }
+    })
+  }
+
+  onchangeFromEmail(e: any) {
+    for (var i = 0; i < this.EmailList.length; i++) {
+      if (this.EmailList[i].id == e.target.value) {
+        this.UpdateFromName = this.EmailList[i].fromName;
+        this.UpdateReplyTo = 'Test';
+      }
+    }
+  }
+
+  SaveUpdates() {
+    this.Loader = true;
+    if (this.UpdateDate == '' || this.UpdateDate == null) {
+      this.UpdateDateError = true;
+      this.Loader = false;
+    }
+    else if (this.UpdateSubject == '' || this.UpdateSubject == null) {
+      this.UpdateSubjectError = true;
+      this.Loader = false;
+    }
+    else {
+      let update: any = {};
+      update.AdminUserId = Number(localStorage.getItem('UserId'));
+      if (localStorage.getItem('RouteName') == 'offering') {
+        update.OfferingId = this.offeringId;
+      }
+      else {
+        update.offeringId = this.reservationId;
+      }
+      update.Date = this.UpdateDate;
+      update.Subject = this.UpdateSubject;
+      update.FromName = this.UpdateFromName;
+      update.FromEmailId = Number(this.UpdateFromEmail);
+      update.ReplyTo = this.UpdateReplyTo;
+      update.Content = this.UpdateValue;
+      update.Name = this.ViewDetailsByStaus?.name;
+      update.IsDocumentPrivate = this.IsDocumentPrivate;
+      if (this.ModalName == 'Edit') {
+        update.id = this.updateId;
+        this._portfolio.Updatedetails(update).subscribe(data => {
+          if (data) {
+            this.addUpdateShow = false;
+            this.toastr.success("Successfully Updated")
+            this.getUpdates();
+          }
+          else {
+            this.addUpdateShow = false;
+            this.toastr.error("Updated Failed");
+            this.Loader = false;
+          }
+        })
+      }
+      else {
+        this._portfolio.addUpdate(update).subscribe(data => {
+          if (data) {
+            this.addUpdateShow = false;
+            this.toastr.success("Successfully Added")
+            this.getUpdates();
+          }
+          else {
+            this.addUpdateShow = false;
+            this.toastr.error("Added Failed");
+            this.Loader = false;
+          }
+        })
+      }
+    }
+  }
+
+  EditUpdate(value: any , status: any) {
+    this.addUpdateShow = true;
+    this.ModalName = 'Edit';
+    this.parentMessage = {
+      UpdateDate: (new Date(value.date)).toISOString().substring(0, 10),
+      UpdateSubject: value.subject,
+      UpdateFromName: value.fromName,
+      UpdateFromEmail: value.fromEmailId,
+      UpdateReplyTo: value.replyTo,
+      UpdateValue: value.content,
+      updateId: value.id,
+      UpdatebyCheckEmail: value.sendEmailToInvestors,
+      UpdatebyCheckAccount : value.attachAccountStatement,
+      UpdatebyCheckCopy : value.sendCopyToMe,
+      UpdateFiles : value.attachments,
+      UpdateStatus : status
+    }
+  }
+
+  CancelUpdates() {
+    this.addUpdateShow = false;
+    this.parentMessage = {
+    }
+  }
+
+  deleteUpdatesconform(value: any) {
+    this.updateDeleteShow = true;
+    this.updateId = value.id;
+  }
+
+  deleteUpdates() {
+    let adminId = Number(localStorage.getItem('UserId'));
+    var Id: any;
+    if (localStorage.getItem('RouteName') == 'offering') {
+      Id = this.offeringId;
+    } else {
+      Id = this.reservationId;
+    }
+    this._portfolio.deleteUpdate(this.updateId, Id, adminId).subscribe(data => {
+      if (data) {
+        this.toastr.success("deletted successfully");
+        this.updateDeleteShow = false;
+        this.getUpdates();
+      }
+      else {
+        this.toastr.success("deletted failed");
+        this.updateDeleteShow = false;
       }
     })
   }
@@ -1942,7 +3016,6 @@ export class PortfolioComponent implements OnInit {
           if (event.target.files[i].type == 'image/jpeg' || event.target.files[i].type == 'image/png' || event.target.files[i].type == 'image/PNG' || event.target.files[i].type == 'image/jpg' || event.target.files[i].type == 'image/JPEG') {
             reader.onload = () => {
               this.UploadImage.push({ profileImageUrl: reader.result, CoverFileType: 'jpeg' });
-              console.log('UploadImage', this.UploadImage)
             };
           }
         }
@@ -1954,7 +3027,6 @@ export class PortfolioComponent implements OnInit {
   }
 
   SetDefaultImage(value: any) {
-    console.log('SetDefaultImage', value);
     let ImageSet: any = {};
     ImageSet.Id = value.id;
     ImageSet.AdminUserId = value.adminUserId;
@@ -1964,7 +3036,6 @@ export class PortfolioComponent implements OnInit {
       let a: any = {};
       a = data;
       if (a.status == true) {
-        console.log('data', data)
         this.UploadImage = [];
         this.toastr.success("Default Image updated", "Success!");
         this.GalleryList = a.gallery;
@@ -1977,7 +3048,6 @@ export class PortfolioComponent implements OnInit {
   }
 
   RemoveImage(value: any) {
-    console.log('SetDefaultImage', value);
     let ImageSet: any = {};
     ImageSet.Id = value.id;
     ImageSet.AdminUserId = value.adminUserId;
@@ -1987,7 +3057,6 @@ export class PortfolioComponent implements OnInit {
       let a: any = {};
       a = data;
       if (a.status == true) {
-        console.log('data', data)
         this.toastr.success("Image deleted successfully", "Success!");
         this.GalleryList = a.gallery;
       }
@@ -2018,7 +3087,6 @@ export class PortfolioComponent implements OnInit {
       let a: any = {};
       a = data;
       if (a.status == true) {
-        console.log('data', data)
         this.UploadImage = [];
         this.toastr.success("Image updated successfully", "Success!");
         this.Loader = false;
@@ -2120,14 +3188,13 @@ export class PortfolioComponent implements OnInit {
           const reader = new FileReader();
           reader.readAsDataURL(file);
           if (documentType == 'Offering') {
-            if (this.UploadToOfferingFiles.length >= 0 && this.UploadToOfferingFiles.length <= 9) {
+            if (this.UploadToOfferingFiles.length >= 0) {
               this.UploadToOfferingFiles.push(event.target.files[i]);
               temp.documentType = documentType;
               temp.name = event.target.files[i].name;
               temp.size = event.target.files[i].size;
               temp.type = event.target.files[i].type;
               this.files.push(temp);
-              console.log('UploadToOfferingFiles', this.UploadToOfferingFiles)
             }
           }
           else {
@@ -2140,7 +3207,6 @@ export class PortfolioComponent implements OnInit {
             temp.size = event.target.files[i].size;
             temp.type = event.target.files[i].type;
             this.files.push(temp);
-            console.log('UploadToWelcomeFiles', this.UploadToWelcomeFiles)
           }
         }
       });
@@ -2150,15 +3216,47 @@ export class PortfolioComponent implements OnInit {
     }
   }
 
+  removeDocuments(file: any, index: any, documenttype: any) {
+    if (documenttype == 'offering') {
+      var temp: any = Array.from(this.UploadToOfferingFiles);
+      temp = temp.filter((x: any) => x != this.UploadToOfferingFiles[index]);
+      this.UploadToOfferingFiles = temp;
+    }
+    else {
+      var temp: any = Array.from(this.UploadToWelcomeFiles);
+      temp = temp.filter((x: any) => x != this.UploadToWelcomeFiles[index]);
+      this.UploadToWelcomeFiles = temp;
+    }
+  }
   removeDocument(file: any, index: any) {
     var temp: any = Array.from(this.filesToUpload);
     temp = temp.filter((x: any) => x != this.filesToUpload[index]);
     this.filesToUpload = temp;
     this.files = this.files.filter((x: any) => x != file);
   }
-
   SaveDocuments() {
     this.Loader = true;
+    if (this.UploadToOfferingFiles.length > 10) {
+      this.toastr.info("The Offering documents count exceed the limit of 10 documents. Current document count is " + this.UploadToOfferingFiles.length + ".");
+      this.Loader = false
+      return;
+    }
+    for (let i = 0; i < this.UploadToOfferingFiles.length; i++) {
+      let size = this.UploadToOfferingFiles[i].size / (1024 * 1024)
+      if (size > 100) {
+        this.toastr.info(" The following offering documents exceeds the file size limit of 100MB, please ensure that the document size is not beyond 100 MB.");
+        this.Loader = false
+        return;
+      }
+    }
+    for (let i = 0; i < this.UploadToWelcomeFiles.length; i++) {
+      let size = this.UploadToWelcomeFiles[i].size / (1024 * 1024)
+      if (size > 100) {
+        this.toastr.info(" The following Welcome documents exceeds the file size limit of 100MB, please ensure that the document size is not beyond 100 MB.");
+        this.Loader = false
+        return;
+      }
+    }
     let a: any = {};
     this.UserId = localStorage.getItem('UserId');
     const Document = new FormData();
@@ -2170,9 +3268,6 @@ export class PortfolioComponent implements OnInit {
     else {
       Document.append("OfferingId", this.reservationId);
     }
-    this.filesToUpload.forEach((item: any) => {
-      Document.append('Files', item);
-    });
     this.UploadToWelcomeFiles.forEach((item: any) => {
       Document.append('WelcomeDocuments', item);
     });
@@ -2202,10 +3297,6 @@ export class PortfolioComponent implements OnInit {
     a.click();
   }
 
-  onViewFile(item: any) {
-    this.DocumentViewPopup = true;
-    this.ViewFile = item;
-  }
 
   onRemoveDocumentShow(value: any, type: any) {
     this.DeleteDocumentPopup = true;
@@ -2277,7 +3368,6 @@ export class PortfolioComponent implements OnInit {
 
     this.addkeyShow = false;
     this.SavekeyShow = false;
-    console.log('Savekeys', this.keyHignlightList)
   }
 
   SaveKeyHighlights(value: any) {
@@ -2294,7 +3384,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.UpdateKeys(keys).subscribe(data => {
       let a: any = {};
       a = data;
-      console.log('UpdateKeys', data)
       if (a.status == true) {
         this.keyHignlightList = [];
         this.toastr.success("Keys Added successfully", "Success!");
@@ -2330,26 +3419,28 @@ export class PortfolioComponent implements OnInit {
     this.keyDeleteShow = false;
   }
 
-  // Funds Instructions for offering details 
+  // Funds Instructions for offering details
 
   onWireTransfer(e: any) {
-    console.log('onWireTransfer', this.wireTransfer);
     if (e.target.checked == false || this.wireTransfer == false) {
       this.wireTransferReadOnly = true;
+      this.WireTransferShow = false;
     }
     else {
       this.wireTransferReadOnly = false;
+      this.WireTransferShow = true;
     }
 
   }
 
   onCheck(e: any) {
-    this.byCheckShow = true;
     if (e.target.checked == false || this.byCheck == false) {
       this.byCheckReadOnly = true;
+      this.byCheckShow = false;
     }
     else {
       this.byCheckReadOnly = false;
+      this.byCheckShow = true;
     }
   }
 
@@ -2365,6 +3456,15 @@ export class PortfolioComponent implements OnInit {
 
   onSaveFundsInstructions(Id: any) {
     this.Loader = true;
+    if (this.wireTransfer == true && this.byCheck == true) {
+      this.FundingType = 3;
+    }
+    else if (this.wireTransfer == true) {
+      this.FundingType = 1;
+    }
+    else if (this.byCheck == true) {
+      this.FundingType = 2;
+    }
     let funds: any = {};
     funds.Id = Id;
     funds.OfferingId = this.offeringId;
@@ -2379,10 +3479,12 @@ export class PortfolioComponent implements OnInit {
     funds.Reference = this.FundReference;
     funds.OtherInstructions = this.FundOtherInstructions;
     funds.MailingAddress = this.FundMailingAddress;
-    funds.CheckBenifiary = this.FundMailBeneficiary;
+    funds.CheckBenificiary = this.FundMailBeneficiary;
     funds.Memo = this.FundMailMemo;
     funds.CheckOtherInstructions = this.FundMailOtherInstructions;
     funds.Custom = this.customMailValue;
+    funds.FundingType = this.FundingType
+    // vasanth
     if (Id == 0) {
       this._portfolio.SaveFunds(funds).subscribe(data => {
         if (data != null) {
@@ -2423,14 +3525,22 @@ export class PortfolioComponent implements OnInit {
     this.ModalName = 'Add';
     this.addInvestmentShow = true;
     this.UbdatebtnShow = false;
+    this.files = [];
+    this.InvestmentUserId = 0;
+    this.InvestmentStatusId = 0;
+    this.AddInvestmentForm.reset();
+    this.AddInvestmentForm.patchValue({
+      InvestmentOfferingType: this.ViewDetailsByStaus.name,
+    })
   }
 
   addInvestmentCancel() {
     this.addInvestmentShow = false;
+    this.AddInvestmentForm.reset();
+    this.files = [];
   }
 
   addNotes(value: any) {
-    console.log('addNotes', value)
     for (var i = 0; i < this.PortfolioList.length; i++) {
       if (this.PortfolioList[i].id == value.id) {
         this.PortfolioList[i].isNotes = true;
@@ -2471,12 +3581,24 @@ export class PortfolioComponent implements OnInit {
     InvestmentModel.append("Status", this.InvestmentStatusId);
     InvestmentModel.append("FundsReceivedDate", this.AddInvestmentForm.value.InvestmentFundReceived);
     InvestmentModel.append("DocumenteSignedDate", this.AddInvestmentForm.value.InvestmentDocsSigned);
-    this.filesToUpload.forEach((item: any) => {
-      InvestmentModel.append('eSignedDocument', item);
-    });
+    if (this.UbdatebtnShow == true) {
+      if (this.filesToUpload.length == 0) {
+        InvestmentModel.append("eSignedDocumentPath", this.EditInvestmentData.eSignedDocumentPath);
+      }
+      else if (this.filesToUpload.length > 0) {
+        this.filesToUpload.forEach((item: any) => {
+          InvestmentModel.append('eSignedDocument', item);
+        });
+        InvestmentModel.append("eSignedDocumentPath", '');
+      }
+    }
+    else {
+      this.filesToUpload.forEach((item: any) => {
+        InvestmentModel.append('eSignedDocument', item);
+      });
+    }
     if (this.UbdatebtnShow == false) {
       this._portfolio.SaveInvestment(InvestmentModel).subscribe(data => {
-        console.log('SaveInvestment', data)
         if (data) {
           this.toastr.success("Investment added successfully", "Success");
           this.addInvestmentShow = false;
@@ -2486,6 +3608,7 @@ export class PortfolioComponent implements OnInit {
           this.InvestmentStatusId = 0;
           this.getInvestorList();
           this.filesToUpload = [];
+          this.files = [];
         }
         else {
           this.Loader = false;
@@ -2494,12 +3617,8 @@ export class PortfolioComponent implements OnInit {
       })
     }
     else {
-      if (this.filesToUpload.length == 0) {
-        InvestmentModel.append("eSignedDocumentPath", this.EditInvestmentData.eSignedDocumentPath);
-      }
       InvestmentModel.append("Id", this.InvestmentId);
       this._portfolio.UpdateInvestment(InvestmentModel).subscribe(data => {
-        console.log('UpdateInvestment', data)
         if (data) {
           this.toastr.success("Investment updated successfully", "Success");
           this.addInvestmentShow = false;
@@ -2509,6 +3628,7 @@ export class PortfolioComponent implements OnInit {
           this.InvestmentStatusId = 0;
           this.getInvestorList();
           this.filesToUpload = [];
+          this.files = [];
         }
         else {
           this.Loader = false;
@@ -2519,22 +3639,25 @@ export class PortfolioComponent implements OnInit {
   }
 
   EditInvestment(value: any) {
-    this.ModalName = 'Update';
-    this.addInvestmentShow = true;
-    this.UbdatebtnShow = true;
-    this.EditInvestmentData = value;
-    this.InvestmentId = value.id;
-    this.AddInvestmentForm.patchValue({
-      InvestmentAmount: this.EditInvestmentData.amount,
-      InvestmentFundReceived: (new Date(this.EditInvestmentData.fundsReceivedDate)).toISOString().substring(0, 10),
-      InvestmentDocsSigned: (new Date(this.EditInvestmentData.documenteSignedDate)).toISOString().substring(0, 10),
-    })
-    this.InvestmentUserId = this.EditInvestmentData.userId;
-    if (this.InvestmentUserId != null) {
-      this.onchangeInvestmentUser(this.InvestmentUserId);
-    }
-    this.InvestmentStatusId = this.EditInvestmentData.status;
-    console.log('EditInvestment', value)
+    // this.ModalName = 'Update';
+    // this.addInvestmentShow = true;
+    // this.UbdatebtnShow = true;
+    // this.InvestmentBtnShow = false;
+    // this.EditInvestmentData = value;
+    // this.InvestmentId = value.id;
+    // this.DocumentPath = value.eSignedDocumentPath;
+    // this.AddInvestmentForm.patchValue({
+    //   InvestmentOfferingType: this.ViewDetailsByStaus.name,
+    //   InvestmentAmount: this.EditInvestmentData.amount,
+    //   InvestmentFundReceived: (new Date(this.EditInvestmentData.fundsReceivedDate)).toISOString().substring(0, 10),
+    //   InvestmentDocsSigned: (new Date(this.EditInvestmentData.documenteSignedDate)).toISOString().substring(0, 10),
+    // })
+    // this.InvestmentUserId = this.EditInvestmentData.userId;
+    // if (this.InvestmentUserId != null) {
+    //   this.onchangeInvestmentUser(this.InvestmentUserId);
+    // }
+    // this.InvestmentStatusId = this.EditInvestmentData.status;
+    this.addInvestmentComponent.EditInvestment(value, 'Offering');
   }
 
   DeleteInvestmentConformation(value: any) {
@@ -2566,7 +3689,6 @@ export class PortfolioComponent implements OnInit {
           'id': 0,
           'fullName': 'Select User'
         })
-        console.log('UserTypeList', data)
       }
     })
   }
@@ -2581,7 +3703,6 @@ export class PortfolioComponent implements OnInit {
           'id': 0,
           'name': 'Select Profile'
         })
-        console.log('profileList', data)
       }
       if (this.UbdatebtnShow == true) {
         this.InvestmentProfileId = this.EditInvestmentData.profileId;
@@ -2597,7 +3718,6 @@ export class PortfolioComponent implements OnInit {
           'id': 0,
           'name': 'Select'
         })
-        console.log('statusList', data)
       }
     })
   }
@@ -2644,6 +3764,8 @@ export class PortfolioComponent implements OnInit {
           temp.size = event.target.files[i].size;
           temp.type = event.target.files[i].type;
           this.files.push(temp);
+          this.DocumentPath = null;
+          this.InvestmentBtnShow = false;
         }
       });
       if (ext == null) {
@@ -2652,14 +3774,13 @@ export class PortfolioComponent implements OnInit {
     }
   }
 
-  // Offering Reservation summary and List Get
+  // Offering Reservation summary and List Get and Delete
   getOfferingReservationSummary() {
     this.Loader = true;
     let offeringId = this.offeringId;
     this._portfolio.getOfferingReservationSummary(offeringId).subscribe(data => {
       if (data != null) {
         this.offeringReservationSummary = data;
-        console.log('offeringReservationSummary', data)
         this.Loader = false;
       }
       else {
@@ -2675,7 +3796,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getOfferingReservationList(offeringId).subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('getOfferingReservationList', data)
         this.Loader = false;
       }
       else {
@@ -2684,31 +3804,146 @@ export class PortfolioComponent implements OnInit {
     })
   }
 
-  // Reservation Details for Add Reservation 
-  onAddReservation() {
-    this.ModalName = 'Add';
-    this.UbdatebtnShow = false;
-    this.addNewReservationShow = true;
+  deleteOfferingReservation(value: any) {
+    this.OfferingReservationDeleteShow = true;
+    this.OfferingReservationValue = value;
   }
 
-  get NR() { return this.AddNewReservationForm.controls }
-
-  addNewReservationCancel() {
-    this.addNewReservationShow = false;
+  DeleteOfferingReservationItems() {
+    let adminUserId = localStorage.getItem('UserId');
+    this._portfolio.deleteReservation(adminUserId, this.OfferingReservationValue.id).subscribe(data => {
+      if (data) {
+        this.getOfferingReservationSummary();
+        this.getofferingReservationList();
+        this.toastr.success("Reservation deleted successfully", "Success!");
+        this.OfferingReservationDeleteShow = false;
+      }
+      else {
+        this.toastr.error("Reservation can't be delete", "Error!");
+        this.OfferingReservationDeleteShow = false;
+      }
+    })
   }
 
-  onchangeReservationUser(e: any, Id: any) {
-    this.AddNewReservationForm.get('ReservationUser').setValue(e.target.value);
-    this.AddNewReservationForm.value.ReservationUser = e.target.value;
-    let ReservationUserId = +e.target.value;
-    if (ReservationUserId == 0) {
-      this.ReservationUserError = true;
+  addNotesOfferingReservation(value: any) {
+    this.NotePopup = true;
+    this.EditBool = false;
+    this.EditReservationNoteId = 0;
+    this.WriteNoteBool = false;
+    this.OffReservationId = value.userId;
+    this.getOfferingReservationNotes(this.OffReservationId)
+  }
+
+  getOfferingReservationNotes(Id: any) {
+    this._portfolio.getOffReservationNotes(Id).subscribe(data => {
+      this.ReservationNotesData = data;
+      if (this.ReservationNotesData.length > 0) {
+        this.TableView = true;
+        this.InvestorNotes = ''
+      }
+      else {
+        this.TableView = false;
+        this.NotesEmpty = true;
+      }
+      this.Loader = false;
+    })
+  }
+
+  EditNote(e: any) {
+    this.WriteNoteBool = true;
+    this.TableView = false;
+    this.EditBool = true;
+    this.InvestorNotes = e.notes;
+    this.EditReservationNoteId = e.id
+  }
+
+  DeleteNote(e: any) {
+    this.Loader = true;
+    let UserId = localStorage.getItem('UserId')
+    this._portfolio.DeleteOffReservationNotes(UserId, e.id).subscribe(data => {
+      if (data == true) {
+        this.WriteNoteBool = false;
+        this.getOfferingReservationNotes(this.OffReservationId)
+      }
+      else {
+        this.Loader = false;
+      }
+    })
+  }
+
+  NoteSave() {
+    this.Loader = true;
+    let notes = {
+      Id: this.EditReservationNoteId != 0 ? this.EditReservationNoteId : 0,
+      AdminUserId: Number(localStorage.getItem('UserId')),
+      UserId: this.OffReservationId,
+      Notes: this.InvestorNotes,
+      Active: true
+    }
+    if (this.EditReservationNoteId == 0) {
+      this._portfolio.AddOffReservationNotes(notes).subscribe(data => {
+        if (data == true) {
+          this.WriteNoteBool = false;
+          this.getOfferingReservationNotes(this.OffReservationId)
+        }
+        else {
+          this.Loader = false;
+        }
+      })
     }
     else {
-      this.ReservationUserError = false;
-      this.onchangeReservationtUser(Id);
+      this._portfolio.UpdateOffReservationNotes(notes).subscribe(data => {
+        if (data == true) {
+          this.WriteNoteBool = false;
+          this.getOfferingReservationNotes(this.OffReservationId);
+          this.EditReservationNoteId = 0
+        }
+        else {
+          this.Loader = false;
+        }
+      })
     }
   }
+
+  onWriteANote() {
+    this.NotesEmpty = false;
+    this.WriteNoteBool = true;
+    this.EditBool = false;
+    this.InvestorNotes = '';
+  }
+
+  OnCancel() {
+    this.WriteNoteBool = false;
+    if (this.ReservationNotesData.length > 0) {
+      this.TableView = true;
+      this.InvestorNotes = this.ReservationNotesData[0].notes
+    }
+    else {
+      this.NotesEmpty = true;
+    }
+  }
+  // Reservation Details for Add Reservation
+  // onAddReservation() {
+  //   this.ModalName = 'Add';
+  //   this.UbdatebtnShow = false;
+  //   this.addNewReservationShow = true;
+  // }
+
+  // get NR() { return this.AddNewReservationForm.controls }
+
+
+  // onchangeReservationUser(e: any, Id: any) {
+  //   this.AddNewReservationForm.get('ReservationUser').setValue(e.target.value);
+  //   this.AddNewReservationForm.value.ReservationUser = e.target.value;
+  //   let ReservationUserId = +e.target.value;
+  //   if (ReservationUserId == 0) {
+  //     this.ReservationUserError = true;
+  //   }
+  //   else {
+  //     this.ReservationUserError = false;
+  //     this.onchangeReservationtUser(Id);
+  //   }
+  // }
 
   onchangeReservationtUser(value: any) {
     this.profileList = [];
@@ -2720,7 +3955,6 @@ export class PortfolioComponent implements OnInit {
           'id': 0,
           'name': 'Select Profile'
         })
-        console.log('profileList', data)
       }
       if (this.UbdatebtnShow == true) {
         this.ReservationProfileId = this.NewReservationValue.profileId;
@@ -2728,137 +3962,135 @@ export class PortfolioComponent implements OnInit {
     })
   }
 
-  onchangeProfileType(e: any) {
-    this.AddNewReservationForm.get('ReservationProfileType').setValue(e.target.value);
-    this.AddNewReservationForm.value.ReservationProfileType = e.target.value;
-    let ReservationProfileId = +e.target.value;
-    if (ReservationProfileId == 0) {
-      this.ReservationProfileError = true;
-    }
-    else {
-      this.ReservationProfileError = false;
-    }
-  }
+  // onchangeProfileType(e: any) {
+  //   this.AddNewReservationForm.get('ReservationProfileType').setValue(e.target.value);
+  //   this.AddNewReservationForm.value.ReservationProfileType = e.target.value;
+  //   let ReservationProfileId = +e.target.value;
+  //   if (ReservationProfileId == 0) {
+  //     this.ReservationProfileError = true;
+  //   }
+  //   else {
+  //     this.ReservationProfileError = false;
+  //   }
+  // }
 
-  onReservationAmount(e: any) {
-    this.AddNewReservationForm.get('ReservationAmount').setValue(e.target.value);
-    if (e.target.value == 0) {
-      this.ReservationAmountZeroError = true;
-    }
-    else {
-      this.ReservationAmountZeroError = false;
-    }
-    if (this.AddNewReservationForm.value.ReservationAmount == '' || this.AddNewReservationForm.value.ReservationAmount == null) {
-      this.ReservationAmountError = true;
-    }
-    else {
-      this.ReservationAmountError = false;
-    }
-  }
+  // onReservationAmount(e: any) {
+  //   this.AddNewReservationForm.get('ReservationAmount').setValue(e.target.value);
+  //   if (e.target.value == 0) {
+  //     this.ReservationAmountZeroError = true;
+  //   }
+  //   else {
+  //     this.ReservationAmountZeroError = false;
+  //   }
+  //   if (this.AddNewReservationForm.value.ReservationAmount == '' || this.AddNewReservationForm.value.ReservationAmount == null) {
+  //     this.ReservationAmountError = true;
+  //   }
+  //   else {
+  //     this.ReservationAmountError = false;
+  //   }
+  // }
 
-  onchangeReservationLevel(e: any) {
-    this.AddNewReservationForm.get('ReservationLevel').setValue(e.target.value);
-    this.AddNewReservationForm.value.ReservationLevel = e.target.value;
-    let ReservationLevelId = +e.target.value;
-    if (ReservationLevelId == 0) {
-      this.ReservationLevelError = true;
-    }
-    else {
-      this.ReservationLevelError = false;
-    }
-  }
+  // onchangeReservationLevel(e: any) {
+  //   this.AddNewReservationForm.get('ReservationLevel').setValue(e.target.value);
+  //   this.AddNewReservationForm.value.ReservationLevel = e.target.value;
+  //   let ReservationLevelId = +e.target.value;
+  //   if (ReservationLevelId == 0) {
+  //     this.ReservationLevelError = true;
+  //   }
+  //   else {
+  //     this.ReservationLevelError = false;
+  //   }
+  // }
 
-  onSubmitNewReservationForm() {
-    this.Loader = true;
-    this.submitted = true;
-    if (this.AddNewReservationForm.value.ReservationUser == 0) {
-      this.ReservationUserError = true;
-      this.Loader = false;
-    }
-    if (this.AddNewReservationForm.value.ReservationProfileType == 0) {
-      this.ReservationProfileError = true;
-      this.Loader = false;
-    }
-    if (this.AddNewReservationForm.value.ReservationLevel == 0) {
-      this.ReservationLevelError = true;
-      this.Loader = false;
-    }
-    else if (this.AddNewReservationForm.invalid) {
-      this.Loader = false;
-      return
-    }
-    else if (this.ReservationUserError == true || this.ReservationProfileError == true || this.ReservationAmountError == true
-      || this.ReservationAmountZeroError == true || this.ReservationLevelError == true) {
-      this.Loader = false;
-      return
-    }
-    else {
-      let ReservationModel: any = {};
-      ReservationModel.AdminUserId = Number(localStorage.getItem('UserId'));
-      ReservationModel.ReservationId = this.reservationId;
-      ReservationModel.ReservationName = this.AddNewReservationForm.value.NewReservationName;
-      ReservationModel.UserId = +this.ReservationUserId;
-      ReservationModel.ProfileId = +this.ReservationProfileId;
-      ReservationModel.Amount = +this.AddNewReservationForm.value.ReservationAmount;
-      ReservationModel.ConfidenceLevel = +this.ReservationLevelId;
-      if (this.UbdatebtnShow == false) {
-        this._portfolio.SaveNewReservation(ReservationModel).subscribe(data => {
-          console.log('SaveNewReservation', data)
-          if (data) {
-            this.toastr.success("Reservation added successfully", "Success");
-            this.addNewReservationShow = false;
-            this.AddNewReservationForm.reset();
-            this.ReservationUserId = 0;
-            this.ReservationProfileId = 0;
-            this.ReservationLevelId = 0;
-            this.getNewReservationSummary();
-            this.getNewReservationList();
-          }
-          else {
-            this.Loader = false;
-            this.toastr.error("Reservation can't be added", "Error");
-          }
-        })
-      }
-      else {
-        ReservationModel.Id = this.ResertvationId;
-        this._portfolio.UpdateNewReservation(ReservationModel).subscribe(data => {
-          console.log('UpdatePortfolioOffering', data)
-          if (data) {
-            this.toastr.success("Reservation updated successfully", "Success");
-            this.addNewReservationShow = false;
-            this.AddNewReservationForm.reset();
-            this.ReservationUserId = 0;
-            this.ReservationProfileId = 0;
-            this.ReservationLevelId = 0;
-            this.getNewReservationSummary();
-            this.getNewReservationList();
-          }
-          else {
-            this.Loader = false;
-            this.toastr.error("Reservation can't be updated", "Error");
-          }
-        })
-      }
-    }
-  }
+  // onSubmitNewReservationForm() {
+  //   this.Loader = true;
+  //   this.submitted = true;
+  //   if (this.AddNewReservationForm.value.ReservationUser == 0) {
+  //     this.ReservationUserError = true;
+  //     this.Loader = false;
+  //   }
+  //   if (this.AddNewReservationForm.value.ReservationProfileType == 0) {
+  //     this.ReservationProfileError = true;
+  //     this.Loader = false;
+  //   }
+  //   if (this.AddNewReservationForm.value.ReservationLevel == 0) {
+  //     this.ReservationLevelError = true;
+  //     this.Loader = false;
+  //   }
+  //   else if (this.AddNewReservationForm.invalid) {
+  //     this.Loader = false;
+  //     return
+  //   }
+  //   else if (this.ReservationUserError == true || this.ReservationProfileError == true || this.ReservationAmountError == true
+  //     || this.ReservationAmountZeroError == true || this.ReservationLevelError == true) {
+  //     this.Loader = false;
+  //     return
+  //   }
+  //   else {
+  //     let ReservationModel: any = {};
+  //     ReservationModel.AdminUserId = Number(localStorage.getItem('UserId'));
+  //     ReservationModel.ReservationId = this.reservationId;
+  //     ReservationModel.ReservationName = this.AddNewReservationForm.value.NewReservationName;
+  //     ReservationModel.UserId = +this.ReservationUserId;
+  //     ReservationModel.ProfileId = +this.ReservationProfileId;
+  //     ReservationModel.Amount = +this.AddNewReservationForm.value.ReservationAmount;
+  //     ReservationModel.ConfidenceLevel = +this.ReservationLevelId;
+  //     if (this.UbdatebtnShow == false) {
+  //       this._portfolio.SaveNewReservation(ReservationModel).subscribe(data => {
+  //         if (data) {
+  //           this.toastr.success("Reservation added successfully", "Success");
+  //           this.addNewReservationShow = false;
+  //           this.AddNewReservationForm.reset();
+  //           this.ReservationUserId = 0;
+  //           this.ReservationProfileId = 0;
+  //           this.ReservationLevelId = 0;
+  //           this.getNewReservationSummary();
+  //           this.getNewReservationList();
+  //         }
+  //         else {
+  //           this.Loader = false;
+  //           this.toastr.error("Reservation can't be added", "Error");
+  //         }
+  //       })
+  //     }
+  //     else {
+  //       ReservationModel.Id = this.ResertvationId;
+  //       this._portfolio.UpdateNewReservation(ReservationModel).subscribe(data => {
+  //         if (data) {
+  //           this.toastr.success("Reservation updated successfully", "Success");
+  //           this.addNewReservationShow = false;
+  //           this.AddNewReservationForm.reset();
+  //           this.ReservationUserId = 0;
+  //           this.ReservationProfileId = 0;
+  //           this.ReservationLevelId = 0;
+  //           this.getNewReservationSummary();
+  //           this.getNewReservationList();
+  //         }
+  //         else {
+  //           this.Loader = false;
+  //           this.toastr.error("Reservation can't be updated", "Error");
+  //         }
+  //       })
+  //     }
+  //   }
+  // }
 
   EditNewReservation(value: any) {
-    console.log('EditNewReservation', value)
-    this.ResertvationId = value.id;
-    this.NewReservationValue = value;
-    this.UbdatebtnShow = true;
-    this.addNewReservationShow = true;
-    this.AddNewReservationForm.patchValue({
-      NewReservationName: value.investorName,
-      ReservationAmount: value.amount,
-    })
-    this.ReservationUserId = value.userId;
-    if (value.userId != null) {
-      this.onchangeReservationtUser(this.ReservationUserId);
-    }
-    this.ReservationProfileId = value.profileId;
-    this.ReservationLevelId = value.confidenceLevel;
+    // this.ResertvationId = value.id;
+    // this.NewReservationValue = value;
+    // this.UbdatebtnShow = true;
+    // this.addNewReservationShow = true;
+    // this.AddNewReservationForm.patchValue({
+    //   NewReservationName: value.investorName,
+    //   ReservationAmount: value.amount,
+    // })
+    // this.ReservationUserId = value.userId;
+    // if (value.userId != null) {
+    //   this.onchangeReservationtUser(this.ReservationUserId);
+    // }
+    // this.ReservationProfileId = value.profileId;
+    // this.ReservationLevelId = value.confidenceLevel;
+    this.addReservationComponent.EditReservation(value, 'reservation');
   }
 
   getNewReservationSummary() {
@@ -2867,7 +4099,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getReservationSummary(reservationId).subscribe(data => {
       if (data != null) {
         this.ReservationSummary = data;
-        console.log('ReservationSummary', data)
         this.Loader = false;
       }
       else {
@@ -2883,7 +4114,6 @@ export class PortfolioComponent implements OnInit {
     this._portfolio.getReservationList(reservationId).subscribe(data => {
       if (data != null) {
         this.PortfolioList = data;
-        console.log('getReservationList', data)
         this.Loader = false;
       }
       else {
@@ -2934,4 +4164,369 @@ export class PortfolioComponent implements OnInit {
       }
     }
   }
+
+  receiveMessage1(e: any) {
+    this.selectReservationsview();
+  }
+  onDocumentPrivate(e: any) {
+    this.DocumentPrivateConfirm = true;
+    if (e.target.checked) {
+      this.PrivateConfirmMessage = 1;
+    }
+    else {
+      this.PrivateConfirmMessage = 2;
+    }
+  }
+  Documentconfirm(value: any) {
+    this.Loader = true
+    if (value == 'yes') {
+      let DocumentFields: any = {};
+      DocumentFields.AdminUserId = Number(localStorage.getItem('UserId'));
+      DocumentFields.OfferingId = this.offeringId;
+      DocumentFields.IsDocumentPrivate = this.IsDocumentPrivate;
+      this._portfolio.UpdateDocumentIsPrivate(DocumentFields).subscribe(data => {
+        if (data == true) {
+          this.Loader = false;
+          this.ViewDetailsByStaus.isDocumentPrivate = this.IsDocumentPrivate;
+          if (this.IsDocumentPrivate) {
+            this.toastr.success('Document is Set to Public');
+          } else {
+            this.toastr.success('Document is set to Private');
+          }
+          this.DocumentPrivateConfirm = false;
+        }
+        else {
+          this.Loader = false;
+          this.toastr.success('Document Status update Failed');
+          this.DocumentPrivateConfirm = false;
+
+        }
+      })
+    }
+    else {
+      this.Loader = false;
+      this.DocumentPrivateConfirm = false;
+      this.IsDocumentPrivate = this.ViewDetailsByStaus.isDocumentPrivate;
+    }
+
+  }
+
+  receiveMessage() {
+    this.selectUpdates();
+    this.addUpdateShow = false;
+  }
+
+  onItemSelect(e: any) {
+    // this.OVisibilityList.push(e);
+    if (this.OVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.OVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.OVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.OVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.OVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onSelectAll(e: any) {
+    this.OVisibilityList = [];
+    for (let i = 0; i < e.length; i++) {
+      this.OVisibilityList.push(e[i]);
+    }
+    if (this.OVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.OVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.OVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.OVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.OVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onItemDeSelect(e: any) {
+    this.OVisibilityList = this.OVisibilityList.filter((x: { id: any; }) => x.id != e.id)
+    if (this.OVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.OVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.OVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.OVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.OVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onDeSelectAll(e: any) {
+    this.OVisibilityList = [];
+    if (this.OVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.OVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.OVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.OVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.OVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+  onRItemSelect(e: any) {
+    // this.RVisibilityList.push(e);
+    if (this.RVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.RVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.RVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.RVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.RVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onRSelectAll(e: any) {
+    this.RVisibilityList = [];
+    for (let i = 0; i < e.length; i++) {
+      this.RVisibilityList.push(e[i]);
+    }
+    if (this.RVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.RVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.RVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.RVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.RVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onRItemDeSelect(e: any) {
+    this.RVisibilityList = this.RVisibilityList.filter((x: { id: any; }) => x.id != e.id)
+    if (this.RVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.RVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.RVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.RVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.RVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  onRDeSelectAll(e: any) {
+    this.RVisibilityList = [];
+    if (this.RVisibilityList.length == 0) {
+      this.VisibilityError = true;
+      this.NoAllVisibilityError = false;
+    }
+    else {
+      this.VisibilityError = false;
+      let x = this.RVisibilityList.filter((x: { name: string; }) => x.name == "No Users")
+      if (x.length > 0 && this.RVisibilityList.length >= 2) {
+        this.NoAllVisibilityError = true;
+      }
+      else {
+        let y = this.RVisibilityList.filter((x: { name: string; }) => x.name == "All Users")
+        if (y.length > 0 && this.RVisibilityList.length >= 2) {
+          this.NoAllVisibilityError = true;
+        }
+        else {
+          this.NoAllVisibilityError = false;
+        }
+      }
+    }
+  }
+
+  GetOfferingStatus(){
+    this._portfolio.GetOfferingStatus().subscribe(data =>{
+      this.MainOfferingStatusList = data;
+      this.OfferingStatusList = this.MainOfferingStatusList.filter((x: { id: number; }) => x.id == 1 || x.id == 2 || x.id == 3 || x.id == 4);
+      this.ReservationStatusList = this.MainOfferingStatusList.filter((x: { id: number; }) => x.id == 1 || x.id == 5 || x.id == 6);
+      this.OfferingStatusList.unshift({
+        id : 0,
+        name : 'Select'
+      })
+      this.ReservationStatusList.unshift({
+        id : 0,
+        name : 'Select'
+      })
+    })
+  }
+
+  GetOfferingType(){
+    this._portfolio.GetOfferingType().subscribe(data =>{
+      this.OfferingTypeList = data;
+      this.OfferingTypeList.unshift({
+        id : 0,
+        name : 'Select'
+      })
+    })
+  }
+
+
+  importDistributionShow(){
+    this.SelectedDistribution = 'AddDistribution';
+    this.importdistributionShow = true;
+    this.DocumentFile = []
+  }
+
+  onFileChange(files: FileHandle[]) {
+    this.filesToUpload = [];
+    this.DocumentFile = [];
+    for (var i = 0; i < files.length; i++) {
+      let ext: any;
+      this.allowedFileExtensionsCSVDocument.forEach((element: any) => {
+        if (element == files[i].file.name.split('.').pop()) {
+          ext = null;
+          ext = files[i].file.name.split('.').pop();
+          this.DocumentFile.push({ Id: this.DocumentFile.length * -1, File: files[i].file });
+          this.filesToUpload.push(files[i].file);
+        }
+      });
+      if (ext == null) {
+        this.toastr.error(files[i].file.name.split('.').pop() + ' files are not accepted.', 'Error');
+      }
+    }
+    for (let i = 0; i < this.DocumentFile.length; i++) {
+      let size = this.DocumentFile[i].File.size / (1024 * 1024)
+      if (size < 15) {
+        this.DocSizeBool = false;
+      }
+      else {
+        this.DocSizeBool = true;
+        this.DocSizeCount = this.DocSizeCount + 1
+      }
+    }
+    if (this.DocSizeCount > 0) {
+      this.DocSizeBool = true;
+    }
+  }
+  onFileChange1(event: any) {
+    this.filesToUpload = [];
+    this.DocumentFile = [];
+    for (var i = 0; i < event.target.files.length; i++) {
+      let ext: any;
+      this.allowedFileExtensionsCSVDocument.forEach((element: any) => {
+        if (element == event.target.files[i].name.split('.').pop()) {
+          ext = null;
+          ext = event.target.files[i].name.split('.').pop();
+          this.filesToUpload.push(event.target.files[i]);
+          this.DocumentFile.push({ Id: this.DocumentFile.length * -1, File: event.target.files[i] });
+        }
+      });
+      if (ext == null) {
+        this.toastr.error(event.target.files[i].name.split('.').pop() + ' files are not accepted.', 'Error');
+      }
+    }
+    for (let i = 0; i < this.DocumentFile.length; i++) {
+      let size = this.DocumentFile[i].File.size / (1024 * 1024)
+      if (size < 15) {
+        this.DocSizeBool = false;
+      }
+      else {
+        this.DocSizeBool = true;
+        this.DocSizeCount = this.DocSizeCount + 1
+      }
+    }
+    if (this.DocSizeCount > 0) {
+      this.DocSizeBool = true;
+    }
+  }
+  removeCSVFile() {
+    this.filesToUpload = [];
+    this.DocumentFile = [];
+    this.DocSizeBool = false;
 }
+
+ReviwDistributionDocument(){
+  this.PortfolioList = [];
+  const DocumentListImg = new FormData();
+  this.filesToUpload.forEach((item: string | Blob) => {
+    DocumentListImg.append('capTableFile', item);
+  });
+  this._portfolio.importDistribution(DocumentListImg).subscribe(data => {
+    if(data){
+      console.log('importDistribution', data)
+      this.PortfolioList = data;
+    }
+  })
+}
+}
+
+

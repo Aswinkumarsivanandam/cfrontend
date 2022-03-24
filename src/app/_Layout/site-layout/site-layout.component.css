@@ -1,0 +1,16 @@
+
+app-side-bar{
+    width: 0px; 
+
+  transition: 0.5s; 
+}
+app-side-bar aside{
+    width: 0px; 
+
+  transition: 0.5s; 
+}
+app-side-bar.active{
+
+    transition: 0.5s; 
+    width:260px;
+ }

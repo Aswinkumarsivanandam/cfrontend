@@ -1,0 +1,134 @@
+<button id="accst_accountstatement" type="button" class="button-outline" (click)="onAccountStatement()"
+  data-toggle="modal" data-target="#AccountStatementPopup1">Account
+  Statement</button>
+
+<div class="modal modal_outer right_modal fade" id="AccountStatementPopup1" tabindex="-1" role="dialog"
+  aria-labelledby="myModalLabel2" *ngIf="AccountStatementPopup1">
+  <div class="modal-dialog" role="document" style="width: auto;">
+    <div class="modal-content ">
+      <div class="modal-header">
+        <h3>Account Statement</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body get_quote_view_modal_body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="d-flex"> <img class="mr-3" src="../../assets/images/phoneicon.png" width="25px">
+              {{AccountStatement?.credorContact?.phoneNumber}}</div> <br>
+            <div class="d-flex"> <img class="mr-3" src="../../assets/images/emalicon.png" width="25px">
+              {{AccountStatement?.credorContact?.emailId}} </div><br>
+            <div class="d-flex"> <img class="mr-3" src="../../assets/images/linkicon.png" width="25px">
+              {{AccountStatement?.credorContact?.websiteUrl}} </div>
+          </div>
+          <div class="col-md-4 logoflex"> <img src="../../assets/images/Credor-logo.png" width="100px"></div>
+        </div><br>
+        <div class="accheadtxt"><strong>A C C O U N T S T A T E M E N T </strong></div>
+        <div class="py-3 accbtm">
+          <div class="row">
+            <div class="col-md-8"> <strong>{{AccountStatement?.investorName | uppercase}}</strong></div>
+            <div class="col-md-4">
+              TOTAL INVESTED : <strong>{{AccountStatement?.totalInvested}}</strong><br>
+              STATEMENT DATE : <strong> {{AccountStatement?.statementDate | date}}</strong>
+            </div>
+          </div>
+        </div><br>
+        <div #container class="chart accountchart">
+          <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptions"></highcharts-chart>
+        </div>
+        <div class="accheadtxt mt-4"><strong>INVESTMENT OVERVIEW</strong></div>
+        <div class="table-wrapper mt-2">
+          <div></div>
+          <table class="documents-table" *ngIf="AccountStatement?.investmentOverviews.length > 0">
+            <thead>
+              <tr>
+                <th scope="col">Offerings</th>
+                <th scope="col">Date</th>
+                <th scope="col">Investment</th>
+                <th scope="col">Funded</th>
+                <th scope="col">Distributions</th>
+                <th scope="col">EM</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of AccountStatement?.investmentOverviews">
+                <td>{{item.offeringName}}</td>
+                <td *ngIf="item.date != null">{{item.date | date}}</td>
+                <td *ngIf="item.date == null">-</td>
+                <td>{{item.investmentAmount | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.fundedAmount | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.distributions | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.em}}</td>
+                <td>{{item.status}}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Total</td>
+                <td>{{TotalInvestedAmount | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalFundedAmount | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalDistributions | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div><br>
+        <div class="accheadtxt"><strong>DISTRIBUTION SUMMARY</strong></div>
+        <div class="table-wrapper mt-2">
+          <div></div>
+          <table class="documents-table" *ngIf="AccountStatement?.distributionsSummaries.length > 0">
+            <thead>
+              <tr>
+                <th scope="col">Offerings</th>
+                <th scope="col">Funded</th>
+                <th scope="col">Operating Income</th>
+                <th scope="col">Gain on Sale</th>
+                <th scope="col">Refinance Proceeds</th>
+                <th scope="col">Return of Capital</th>
+                <th scope="col">Preferred Return</th>
+                <th scope="col">Interest</th>
+                <th scope="col">Investment Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of AccountStatement?.distributionsSummaries">
+                <td>{{item.offeringName}}</td>
+                <td>{{item.funded | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.operatingIncome | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.gainOnSale | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.refinanceProceeds | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.returnOfCapital | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.preferredReturn | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.interest | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{item.investmentBalance | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+              </tr>
+              <tr>
+                <td>Total</td>
+                <td>{{TotalDFunded | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalOperatingIncome | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalGainOnSale | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalRefinanceProceeds | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalReturnOfCapital | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalPreferredReturn | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalInterest | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+                <td>{{TotalInvestmentBalance | currency:'USD' : 'symbol' : '1.0-0'}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer text-center mt-5">
+          <button id="accst_accountstatement_download" class="button-outline mr-3"
+            (click)="onDownloadStatement()">Download Statement</button>
+          <button id="accst_accountstatement_sendemail" class="button-outline" (click)="onSendEmail()">Send
+            Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loader" *ngIf="Loader">
+  <div class="loaderimgdiv"><img class="loaderimg" src="../../assets/images/loader.gif"></div>
+</div>

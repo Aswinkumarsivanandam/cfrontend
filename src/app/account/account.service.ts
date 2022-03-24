@@ -36,6 +36,9 @@ export class AccountService {
   VerifyEmail(data : any){
     return this.http.put(this.APIURL + '/Account/verifyuseremailid',data,{responseType : 'json'})
   }
+  VerifyTwoFactorAuthentication(data : any){
+    return this.http.put(this.APIURL + '/Account/verifytwofactorauthentication',data,{responseType : 'json'})
+  }
   ResendOtp(data : any){
     return this.http.put(this.APIURL + '/Account/resendonetimepassword',data,{responseType : 'json'});
   }

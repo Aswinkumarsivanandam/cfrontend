@@ -1,0 +1,45 @@
+.u-row{
+    min-width: 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: auto !important;
+}
+.u-row table{
+    width: 100% !important;
+    overflow: auto !important;
+
+}
+
+.u-col .u-col-100{
+    min-width: 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: auto !important;
+}
+.uploadbtn{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 87px;
+    background: #f7f6f5;
+    padding-top: 13px;
+    padding-bottom: 13px;
+    border-radius: 7px;
+    font-size: 13px;
+    margin-top: -21px;
+    cursor: pointer;
+    border: 1px solid #e7e7e7;
+}
+.savedesign{
+    position: absolute;
+    right: 156px;
+    margin-left: -1px;
+    margin-top: -159px;
+    background: rgb(238, 238, 238);
+    padding: 9px;
+    padding-bottom: 0px;
+    border-top: 1px solid gainsboro;
+}
+.emailedit{
+    margin-top:-10px;
+}

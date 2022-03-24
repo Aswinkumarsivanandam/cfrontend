@@ -1,6 +1,5 @@
 .card-image img {
-    width: 350px;
-    height: 263px;
+ 
     object-fit: cover;
 }
 
@@ -121,8 +120,8 @@
 }
 
 .bubble {
-    top: 12px;
-    right: 6px;
+    top: 3px;
+    right: -4px;
 }
 
 .bubble-inactive {

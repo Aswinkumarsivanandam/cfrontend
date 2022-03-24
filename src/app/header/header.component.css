@@ -28,3 +28,10 @@
     width: 30px;
     height: 30px;
 }
+.navbar{
+  
+
+        box-shadow: 0 2px 16px rgb(0 0 0 / 10%);
+        background: white;
+    
+}

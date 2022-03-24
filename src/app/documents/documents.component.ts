@@ -36,15 +36,20 @@ export class DocumentsComponent implements OnInit {
   TypeId: any;
   DocSizeBool: boolean = false;
   DocSizeCount: any = 0;
-  ViewFile: any;
-  DocumentViewPopup : boolean = false;
+  removedoc: any = [];
 
   constructor(private documentService: DocumentService,
     private toastr: ToastrService) { }
 
   ngOnInit(): void {
-    this.UserId = Number(localStorage.getItem('UserId'));
-    this.allowedFileExtensions = ['txt', 'pdf', 'docx', 'doc', 'xlsx', 'csv', 'pptx', 'jpg', 'jpeg', 'JPEG', 'png', 'PNG', 'gif', 'mp4', 'avi', 'xls'];
+    if (window.name === 'Remote') {
+      this.UserId = Number(localStorage.getItem('InvestorId'));
+    }
+    else {
+      this.UserId = Number(localStorage.getItem('UserId'))
+    }
+    //this.UserId = Number(localStorage.getItem('UserId'));
+    this.allowedFileExtensions = ['pdf', 'docx', 'doc', 'xlsx', 'csv', 'pptx', 'xls'];
     this.selectSubscriptions();
     this.GetDocument();
   }
@@ -118,7 +123,6 @@ export class DocumentsComponent implements OnInit {
       this.MiscellaneousValue = this.DocumentData.filter((x: { type: number; }) => x.type == 5)
       this.UpdatesValue = this.DocumentData.filter((x: { type: number; }) => x.type == 6)
       this.Loader = false;
-      console.log(this.AccreditationValue,'AccreditationValue')
     })
   }
   OnDelete(val: any) {
@@ -153,8 +157,13 @@ export class DocumentsComponent implements OnInit {
         if (element == files[i].file.name.split('.').pop()) {
           this.DocumentFile.push({ Id: this.DocumentFile.length * -1, File: files[i].file });
           this.filesToUpload.push(files[i].file);
+          ext = null;
+          ext = files[i].file.name.split('.').pop();
         }
       });
+      if (ext == null) {
+        this.toastr.error(files[i].file.name.split('.').pop() + ' files are not accepted.', 'Error');
+      }
     }
     for (let i = 0; i < this.DocumentFile.length; i++) {
       let size = this.DocumentFile[i].File.size / (1024 * 1024)
@@ -177,8 +186,13 @@ export class DocumentsComponent implements OnInit {
         if (element == event.target.files[i].name.split('.').pop()) {
           this.filesToUpload.push(event.target.files[i]);
           this.DocumentFile.push({ Id: this.DocumentFile.length * -1, File: event.target.files[i] });
+          ext = null;
+          ext = event.target.files[i].name.split('.').pop();
         }
       });
+      if (ext == null) {
+        this.toastr.error(event.target.files[i].name.split('.').pop() + ' files are not accepted.', 'Error');
+      }
     }
     for (let i = 0; i < this.DocumentFile.length; i++) {
       let size = this.DocumentFile[i].File.size / (1024 * 1024)
@@ -197,8 +211,9 @@ export class DocumentsComponent implements OnInit {
   OnRemoveDoc(id: any) {
     this.Loader = true;
     this.DocSizeCount = 0;
+    this.removedoc = this.DocumentFile.filter((x: { Id: any; }) => x.Id == id)
     this.DocumentFile = this.DocumentFile.filter((x: { Id: any; }) => x.Id != id)
-    this.filesToUpload = this.filesToUpload.filter((x: { name: any; }) => x.name != this.DocumentFile[0].File.name)
+    this.filesToUpload = this.filesToUpload.filter((x: { name: any; }) => x.name != this.removedoc[0].File.name)
     this.DocSizeBool = false;
     for (let i = 0; i < this.DocumentFile.length; i++) {
       let size = this.DocumentFile[i].File.size / (1024 * 1024)
@@ -244,10 +259,6 @@ export class DocumentsComponent implements OnInit {
     a.href = value.filePath;
     a.download = value.name;
     a.click();
-  }
-  onViewFile(item : any){
-    this.DocumentViewPopup = true;
-    this.ViewFile = item;
   }
 
 }
