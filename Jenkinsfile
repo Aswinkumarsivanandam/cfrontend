@@ -32,11 +32,20 @@ pipeline {
                 }
             }
         }
+      
+    // Ng Date time
+        stage('Date-time NG') {
+             steps{  
+                script {
+                    sh "npm i ng-pick-datetime"
+                 }
+            }
+        }
     // NPM build
         stage('Build') {
              steps{  
                 script {
-                    sh "ng build"
+                    sh "ng build" npm i ng-pick-datetime
                  }
             }
         }
