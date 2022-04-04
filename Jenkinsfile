@@ -44,7 +44,7 @@ pipeline {
         stage('Copying build files') {
             steps{  
                 script {
-                    sh "cp -r /var/lib/jenkins/workspace/frontendcredor/dist dockfiles/"
+                    sh "cp -r /var/lib/jenkins/workspace/credor/dist dockfiles/"
                 }
             }
         }
