@@ -45,7 +45,7 @@ pipeline {
         stage('Build') {
              steps{  
                 script {
-                    sh "ng build" npm i ng-pick-datetime
+                    sh "ng build"
                  }
             }
         }
